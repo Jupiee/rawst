@@ -1,6 +1,6 @@
 #!/bin/bash
 
-URL="https://github.com/Jupiee/rawst/releases/download/Latest/rawst.exe"
+URL="https://github.com/Jupiee/rawst/releases/download/0.1/rawst.exe"
 
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
 

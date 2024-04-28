@@ -24,14 +24,14 @@ Snag your files efficiently with Rawst downloader, written in rust for blazingly
 <details>
     <summary>Linux</summary>
 
-- Download [Linux installer](https://github.com/Jupiee/rawst/releases/download/Latest/linux.sh) from releases and run it
+- Download [Linux installer](https://github.com/Jupiee/rawst/releases/download/0.1/linux.sh) from releases and run it
 
 </details>
 
 <details>
     <summary>Windows</summary>
 
-- Download [Windows installer](https://github.com/Jupiee/rawst/releases/download/Latest/windows.bat) from releases and run it
+- Download [Windows installer](https://github.com/Jupiee/rawst/releases/download/0.1/windows.bat) from releases and run it
 
 </details>
 
