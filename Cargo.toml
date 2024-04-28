@@ -1,0 +1,19 @@
+[package]
+name = "rawst"
+version = "0.1.0"
+authors = ["Faseeh Shahzad"]
+description = "Snag your files efficiently with Rawst downloader"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[profile.release]
+opt-level = "s"
+codegen-units = 1
+
+[dependencies]
+clap = {version = "4.5.4", features = ["cargo"]}
+futures = "0.3.30"
+indicatif = "0.17.8"
+reqwest = {version= "0.12.3", features = ["stream"]}
+tokio = {version= "1.37.0", features = ["full"]}
