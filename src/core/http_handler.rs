@@ -2,7 +2,7 @@ use crate::core::io::{merge_files, create_file};
 use crate::core::task::DownloadTask;
 use crate::core::errors::RawstErr;
 
-use std::sync::{atomic::AtomicU64, Arc};
+use std::sync::Arc;
 
 use reqwest::{Client, header::RANGE};
 use futures::stream::{self, StreamExt};
@@ -69,8 +69,6 @@ impl Downloader {
         .unwrap()
         .progress_chars("=>_"));
 
-        let downloaded= Arc::new(AtomicU64::new(0));
-
         match self.connections {
 
             1 => {
@@ -82,7 +80,7 @@ impl Downloader {
 
                 if response.status().is_success() {
 
-                    create_file(task.filename.to_string(), response, progressbar.clone(), downloaded).await?;
+                    create_file(task.filename.to_string(), response, progressbar.clone(), task.downloaded).await?;
     
                 }
 
@@ -102,7 +100,7 @@ impl Downloader {
                     let client= &self.client;
                     let file_name_without_ext= &task.filename.stem;
                     let progressbar= progressbar.clone();
-                    let downloaded= downloaded.clone();
+                    let downloaded= task.downloaded.clone();
 
                     // Creates closure for each request and IO operation
                     // Each closure has separate IO operation

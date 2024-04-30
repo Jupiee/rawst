@@ -1,5 +1,7 @@
 use crate::core::utils::FileName;
 
+use std::sync::{atomic::AtomicU64, Arc};
+
 use reqwest::header::HeaderMap;
 
 #[derive(Clone)]
@@ -30,6 +32,7 @@ pub struct DownloadTask {
 
     pub url: String,
     pub filename: FileName,
+    pub downloaded: Arc<AtomicU64>,
 
     // Cached headermap from Head request
     // Efficient for header values retrieval
@@ -46,6 +49,7 @@ impl DownloadTask {
             url,
             filename,
             headers: cached_headers,
+            downloaded: Arc::new(AtomicU64::new(0))
 
         };
 
