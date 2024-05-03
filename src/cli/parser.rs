@@ -1,6 +1,7 @@
+use crate::core::config::Config;
 use crate::core::task::DownloadTask;
 use crate::core::http_handler::*;
-use crate::core::io::read_links;
+use crate::core::io::{read_links, build_config, load_config, config_exist};
 use crate::core::errors::RawstErr;
 use crate::core::utils::*;
 
@@ -38,7 +39,7 @@ fn build_command() -> ArgMatches {
             Arg::new("Threads")
             .short('m')
             .long("max-threads")
-            .value_parser(value_parser!(u64))
+            .value_parser(value_parser!(usize))
             .default_value("1")
             .help("Maximum number of concurrent downloads")
         )
@@ -46,15 +47,25 @@ fn build_command() -> ArgMatches {
 
 }
 
-async fn url_download(args: ArgMatches) -> Result<(), RawstErr> {
+async fn url_download(args: ArgMatches, mut config: Config) -> Result<(), RawstErr> {
 
+    let threads= args.get_one::<usize>("Threads").unwrap().to_owned();
+
+    // 8 threads are maximum
+    // more than 8 threads could cause rate limiting
+    if !(1..9).contains(&threads) {
+
+        return Err(RawstErr::InvalidThreadCount)
+        
+    }
+
+    config.threads= threads;
+    
     let client= Client::new();
 
     let url= args.get_one::<String>("Url").unwrap();
 
     let save_as= args.get_one::<String>("Saveas");
-    
-    let threads= args.get_one::<u64>("Threads").unwrap().to_owned();
     
     let cached_headers= cache_headers(&client, url).await?;
     
@@ -77,7 +88,7 @@ async fn url_download(args: ArgMatches) -> Result<(), RawstErr> {
         cached_headers
     );
 
-    let downloader= Downloader::new(client, threads)?;
+    let downloader= Downloader::new(client, config)?;
 
     downloader.download(task).await?;
 
@@ -85,7 +96,7 @@ async fn url_download(args: ArgMatches) -> Result<(), RawstErr> {
 
 }
 
-async fn list_download(args: ArgMatches) -> Result<(), RawstErr> {
+async fn list_download(args: ArgMatches, config: Config) -> Result<(), RawstErr> {
 
     let client= Client::new();
 
@@ -94,8 +105,6 @@ async fn list_download(args: ArgMatches) -> Result<(), RawstErr> {
     let link_string= read_links(file_path).await?;
 
     let url_list= link_string.split("\n").collect::<Vec<&str>>();
-
-    let threads= args.get_one::<u64>("Threads").unwrap().to_owned();
 
     let mut download_tasks: Vec<DownloadTask> = Vec::new();
 
@@ -122,7 +131,7 @@ async fn list_download(args: ArgMatches) -> Result<(), RawstErr> {
 
     }
 
-    let downloader= Downloader::new(client, threads)?;
+    let downloader= Downloader::new(client, config)?;
 
     downloader.multi_download(download_tasks).await?;
 
@@ -133,10 +142,16 @@ async fn list_download(args: ArgMatches) -> Result<(), RawstErr> {
 pub async fn init() -> Result<(), RawstErr> {
 
     let args= build_command();
+    let config= match config_exist() {
+
+        true => load_config().await?,
+        false => build_config().await?
+
+    };
 
     if args.contains_id("Url") {
 
-        url_download(args).await?;
+        url_download(args, config).await?;
 
         return Ok(())
 
@@ -144,7 +159,7 @@ pub async fn init() -> Result<(), RawstErr> {
 
     else if args.contains_id("InputFile") {
 
-        list_download(args).await?;
+        list_download(args, config).await?;
 
         return Ok(())
 

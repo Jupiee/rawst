@@ -1,6 +1,8 @@
 use crate::core::io::{merge_files, create_file};
 use crate::core::task::DownloadTask;
 use crate::core::errors::RawstErr;
+use crate::core::config::Config;
+
 
 use std::sync::Arc;
 
@@ -11,7 +13,7 @@ use indicatif::{ProgressBar, ProgressStyle, MultiProgress};
 pub struct Downloader {
 
     pub client: Client,
-    pub connections: u64,
+    pub config: Config,
 
     multi_bar: Arc<MultiProgress>
 
@@ -19,20 +21,12 @@ pub struct Downloader {
 
 impl Downloader {
 
-    pub fn new(client: Client, threads: u64) -> Result<Self, RawstErr> {
-
-        // 8 threads are maximum
-        // more than 8 threads could cause rate limiting
-        if !(1..9).contains(&threads) {
-
-            return Err(RawstErr::InvalidThreadCount)
-            
-        }
+    pub fn new(client: Client, config: Config) -> Result<Self, RawstErr> {
 
         return Ok(Downloader {
 
             client,
-            connections: threads,
+            config,
             multi_bar: Arc::new(MultiProgress::new())
 
         })
@@ -69,7 +63,7 @@ impl Downloader {
         .unwrap()
         .progress_chars("=>_"));
 
-        match self.connections {
+        match self.config.threads {
 
             1 => {
 
@@ -80,17 +74,17 @@ impl Downloader {
 
                 if response.status().is_success() {
 
-                    create_file(task.filename.to_string(), response, progressbar.clone(), task.downloaded).await?;
+                    create_file(task.filename.to_string(), response, progressbar.clone(), task.downloaded, &self.config.download_path).await?;
     
                 }
 
             },
             _ => {
 
-                let chunks= task.into_chunks(self.connections).await;
+                let chunks= task.into_chunks(self.config.threads as u64).await;
                 
                 // Creates a stream iter for downloading each chunk separately
-                let download_tasks= stream::iter((0..self.connections).map(|i| {
+                let download_tasks= stream::iter((0..self.config.threads).map(|i| {
 
                     let i= i as usize;
                     
@@ -116,7 +110,7 @@ impl Downloader {
 
                             let temp_filepath= format!("{}-{}.tmp", file_name_without_ext, i);
 
-                            create_file(temp_filepath, response, progressbar, downloaded).await?;
+                            create_file(temp_filepath, response, progressbar, downloaded, &self.config.cache_path).await?;
 
                         }
 
@@ -126,9 +120,9 @@ impl Downloader {
 
                 }));
 
-                download_tasks.buffer_unordered(self.connections as usize).collect::<Vec<_>>().await;
+                download_tasks.buffer_unordered(self.config.threads).collect::<Vec<_>>().await;
 
-                merge_files(&task.filename, self.connections).await?;
+                merge_files(&task.filename, &self.config).await?;
 
             }
 
