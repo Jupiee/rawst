@@ -16,6 +16,7 @@ Snag your files efficiently with Rawst downloader, written in rust for blazingly
 - Sequential streamed downloads
 - Concurrent downloads with multiple segments
 - Multiple file downloads from a text file
+- Configurable config file
 - Detailed progress bars
 - Blazingly fast execution time
 - Lightweight with less dependencies
@@ -24,14 +25,14 @@ Snag your files efficiently with Rawst downloader, written in rust for blazingly
 <details>
     <summary>Linux</summary>
 
-- Download [Linux installer](https://github.com/Jupiee/rawst/releases/download/0.1/linux.sh) from releases and run it
+- Download [Linux installer](https://github.com/Jupiee/rawst/releases/download/0.2/linux.sh) from releases and run it
 
 </details>
 
 <details>
     <summary>Windows</summary>
 
-- Download [Windows installer](https://github.com/Jupiee/rawst/releases/download/0.1/windows.bat) from releases and run it
+- Download [Windows installer](https://github.com/Jupiee/rawst/releases/download/0.2/windows.bat) from releases and run it
 
 </details>
 
@@ -69,7 +70,7 @@ Options:
 * [ ] Custom headers support
 * [ ] Resumable downloads
 * [ ] Parallel downloads using cores
-* [ ] Config files
+* [x] Config files
 * [ ] Website link grabber
 * [ ] GUI wrapper with [Iced](https://iced.rs/)
 * [ ] Rewrite with better design
