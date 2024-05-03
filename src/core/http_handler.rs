@@ -3,7 +3,6 @@ use crate::core::task::DownloadTask;
 use crate::core::errors::RawstErr;
 use crate::core::config::Config;
 
-
 use std::sync::Arc;
 
 use reqwest::{Client, header::RANGE};
@@ -86,8 +85,6 @@ impl Downloader {
                 // Creates a stream iter for downloading each chunk separately
                 let download_tasks= stream::iter((0..self.config.threads).map(|i| {
 
-                    let i= i as usize;
-                    
                     let file_chunk= &chunks[i];
                     
                     let url= &task.url;
