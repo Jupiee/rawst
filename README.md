@@ -3,11 +3,11 @@
 [![Latest stable release](https://img.shields.io/github/release/jupiee/rawst.svg?maxAge=3600)](https://github.com/jupiee/rawst/releases) [![GitHub license](https://img.shields.io/github/license/jupiee/rawst.svg)](https://github.com/jupiee/rawst/blob/master/LICENSE) [![Total downloads](https://img.shields.io/github/downloads/jupiee/rawst/total.svg)](https://github.com/jupiee/rawst)
 
 > **Content**
-> - [About](https://github.com/jupiee/rawst#about)
-> - [How to install Rawst](https://github.com/jupiee/rawst#how-to-install-rawst)
-> - [Usage](https://github.com/jupiee/rawst#usage)
-> - [Screenshots](https://github.com/jupiee/rawst#screenshots)
-> - [Planned features](https://github.com/jupiee/rawst#planned-features)
+> - [About](#about)
+> - [How to install Rawst](#-how-to-install-rawst)
+> - [Usage](#%EF%B8%8F-usage)
+> - [Screenshots](#screenshots)
+> - [Planned features](#-planned-features)
 
 ### **About**
 Snag your files efficiently with Rawst downloader, written in rust for blazingly fast execution. It's lightweight with less dependencies
@@ -25,14 +25,14 @@ Snag your files efficiently with Rawst downloader, written in rust for blazingly
 <details>
     <summary>Linux</summary>
 
-- Download [Linux installer](https://github.com/Jupiee/rawst/releases/download/0.2/linux.sh) from releases and run it
+- Download [Linux installer](../../releases/download/0.2/linux.sh) from releases and run it
 
 </details>
 
 <details>
     <summary>Windows</summary>
 
-- Download [Windows installer](https://github.com/Jupiee/rawst/releases/download/0.2/windows.bat) from releases and run it
+- Download [Windows installer](../../releases/download/0.2/windows.bat) from releases and run it
 
 </details>
 
