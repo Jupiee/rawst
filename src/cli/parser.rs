@@ -1,6 +1,6 @@
 use crate::core::config::Config;
 use crate::core::task::DownloadTask;
-use crate::core::http_handler::*;
+use crate::core::http_handler::Downloader;
 use crate::core::io::{read_links, build_config, load_config, config_exist};
 use crate::core::errors::RawstErr;
 use crate::core::utils::*;
