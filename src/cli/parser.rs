@@ -3,7 +3,7 @@ use crate::core::task::DownloadTask;
 use crate::core::http_handler::Downloader;
 use crate::core::io::{read_links, build_config, load_config, config_exist};
 use crate::core::errors::RawstErr;
-use crate::core::utils::*;
+use crate::core::utils::{cache_headers, extract_filename_from_header, extract_filename_from_url};
 
 use clap::{value_parser, crate_authors, crate_name, crate_description, crate_version};
 use clap::{Arg, ArgMatches, Command};
