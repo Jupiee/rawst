@@ -3,6 +3,8 @@ name = "rawst"
 version = "0.2.0"
 authors = ["Faseeh Shahzad"]
 description = "Snag your files efficiently with Rawst downloader"
+repository = "https://github.com/Jupiee/rawst"
+license = "GPL-3.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
