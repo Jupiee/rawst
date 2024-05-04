@@ -87,17 +87,15 @@ impl Downloader {
 
                     let file_chunk= &chunks[i];
                     
-                    let url= &task.url;
                     let client= &self.client;
-                    let file_name_without_ext= &task.filename.stem;
                     let progressbar= progressbar.clone();
-                    let downloaded= task.downloaded.clone();
+                    let task= task.clone();
 
                     // Creates closure for each request and IO operation
                     // Each closure has separate IO operation
                     async move {
                         
-                        let response= client.get(url)
+                        let response= client.get(task.url)
                             .header(RANGE, format!("bytes={}-{}", file_chunk.x_offset, file_chunk.y_offset))
                             .send()
                             .await
@@ -105,9 +103,9 @@ impl Downloader {
 
                         if response.status().is_success() {
 
-                            let temp_filepath= format!("{}-{}.tmp", file_name_without_ext, i);
+                            let temp_filepath= format!("{}-{}.tmp", task.filename.stem, i);
 
-                            create_file(temp_filepath, response, progressbar, downloaded, &self.config.cache_path).await?;
+                            create_file(temp_filepath, response, progressbar, task.downloaded, &self.config.cache_path).await?;
 
                         }
 
