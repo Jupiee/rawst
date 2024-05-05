@@ -22,7 +22,7 @@ impl Downloader {
 
     pub fn new(client: Client, config: Config) -> Result<Self, RawstErr> {
 
-        return Ok(Downloader {
+        Ok(Downloader {
 
             client,
             config,
@@ -125,7 +125,7 @@ impl Downloader {
         
         progressbar.finish();
 
-        return Ok(())
+        Ok(())
 
     }
 
