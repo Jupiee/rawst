@@ -54,7 +54,7 @@ pub fn extract_filename_from_url(url: &String) -> FileName {
 
     let filename= parsed_url.path_segments().map(|c| c.collect::<Vec<_>>())
         .unwrap();
-    
+
     let path= Path::new(filename.last().unwrap());
 
     let file_stem= path.file_stem().unwrap().to_str().unwrap().to_string();
@@ -87,7 +87,7 @@ pub fn extract_filename_from_header(headers: &HeaderMap) -> Option<FileName> {
 
                 if trimmed.starts_with("filename=") {
 
-                    let filename = trimmed[10..].trim_matches('"');
+                    let filename = trimmed[9..].trim_matches('"');
 
                     let path= Path::new(filename);
 
