@@ -40,7 +40,6 @@ fn build_command() -> ArgMatches {
             .short('m')
             .long("max-threads")
             .value_parser(value_parser!(usize))
-            .default_value("1")
             .help("Maximum number of concurrent downloads")
         )
         .get_matches()
@@ -49,18 +48,23 @@ fn build_command() -> ArgMatches {
 
 async fn url_download(args: ArgMatches, mut config: Config) -> Result<(), RawstErr> {
 
-    let threads= args.get_one::<usize>("Threads").unwrap().to_owned();
+    let threads= args.get_one::<usize>("Threads");
 
+    // overrides the default count in config
+    if threads.is_some() {
+
+        config.threads= threads.unwrap().to_owned()
+
+    }
+    
     // 8 threads are maximum
     // more than 8 threads could cause rate limiting
-    if !(1..9).contains(&threads) {
+    if !(1..9).contains(&config.threads) {
 
         return Err(RawstErr::InvalidThreadCount)
-        
+
     }
 
-    config.threads= threads;
-    
     let client= Client::new();
 
     let url= args.get_one::<String>("Url").unwrap();
