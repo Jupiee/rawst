@@ -25,14 +25,14 @@ Snag your files efficiently with Rawst downloader, written in rust for blazingly
 <details>
     <summary>Linux</summary>
 
-- Download [Linux installer](../../releases/download/0.2/linux.sh) from releases and run it
+- Download [Linux installer](../../releases/download/0.2.1/linux.sh) from releases and run it
 
 </details>
 
 <details>
     <summary>Windows</summary>
 
-- Download [Windows installer](../../releases/download/0.2/windows.bat) from releases and run it
+- Download [Windows installer](../../releases/download/0.2.1/windows.bat) from releases and run it
 
 </details>
 
@@ -41,8 +41,8 @@ Snag your files efficiently with Rawst downloader, written in rust for blazingly
 
 - run ``cargo build --release``
 - move the binary to corresponding directories
-  Windows => ``C:\Users\%USERNAME%\AppData\Local\Microsoft\WindowsApps``
-  Linux => ``/usr/local/bin``
+  - Windows => ``C:\Users\%USERNAME%\AppData\Local\Microsoft\WindowsApps``
+  - Linux => ``/usr/local/bin``
 
 </details>
 
