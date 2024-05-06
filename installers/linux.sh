@@ -11,6 +11,8 @@ else
     exit 1
 fi
 
-curl -L "$URL" -o "rawst.exe"
+curl -L "$URL" -o "rawst"
 
-mv "rawst.exe" "$DESTINATION"
+chmod +x "rawst"
+
+mv "rawst" "$DESTINATION"
