@@ -109,14 +109,19 @@ impl DownloadTask {
 
     }
 
-    #[allow(dead_code)]
-    pub async fn is_resumable(&self) -> bool {
+    pub async fn allows_partial_content(&self) -> bool {
 
         match self.headers.get("accept-ranges") {
 
-            Some(_) => {
+            Some(value) => {
 
-                return true
+                if value != "none" {
+
+                    return true
+
+                }
+
+                return false
 
             },
             None => {
