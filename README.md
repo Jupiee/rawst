@@ -67,9 +67,12 @@ Options:
 * [ ] Torrent support
 * [ ] Proxy support
 * [ ] Scheduled downloads
+* [ ] Priority downloads
 * [ ] Custom headers support
 * [ ] Resumable downloads
 * [ ] Parallel downloads using cores
+* [ ] Download history
+* [ ] Checksum with sha256
 * [x] Config files
 * [ ] Website link grabber
 * [ ] GUI wrapper with [Iced](https://iced.rs/)
