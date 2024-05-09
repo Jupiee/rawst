@@ -94,7 +94,7 @@ async fn url_download(args: ArgMatches, mut config: Config) -> Result<(), RawstE
 
     // checks if the server allows to receive byte ranges for concurrent download
     // otherwise uses single thread
-    if config.threads > 1 && !task.allows_partial_content().await {
+    if config.threads > 1 && !task.allows_partial_content() {
 
         config.threads= 1
 

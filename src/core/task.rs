@@ -55,9 +55,9 @@ impl DownloadTask {
 
     }
 
-    pub async fn into_chunks(&self, number_of_chunks: u64) -> Vec<Chunk> {
+    pub fn into_chunks(&self, number_of_chunks: u64) -> Vec<Chunk> {
 
-        let total_size= self.content_length().await;
+        let total_size= self.content_length();
 
         let chunk_size= total_size / number_of_chunks;
 
@@ -98,7 +98,7 @@ impl DownloadTask {
 
     }
 
-    pub async fn content_length(&self) -> u64 {
+    pub fn content_length(&self) -> u64 {
 
         match self.headers.get("content-length") {
 
@@ -109,7 +109,7 @@ impl DownloadTask {
 
     }
 
-    pub async fn allows_partial_content(&self) -> bool {
+    pub fn allows_partial_content(&self) -> bool {
 
         match self.headers.get("accept-ranges") {
 

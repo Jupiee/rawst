@@ -56,7 +56,7 @@ impl Downloader {
 
     pub async fn download(&self, task: DownloadTask) -> Result<(), RawstErr> {
 
-        let progressbar= self.multi_bar.add(ProgressBar::new(task.content_length().await).with_message(task.filename.to_string()));
+        let progressbar= self.multi_bar.add(ProgressBar::new(task.content_length()).with_message(task.filename.to_string()));
 
         progressbar.set_style(ProgressStyle::with_template("{msg} | {bytes}/{total_bytes} | [{wide_bar:.green/white}] | {eta} | [{decimal_bytes_per_sec}]")
         .unwrap()
@@ -80,7 +80,7 @@ impl Downloader {
             },
             _ => {
 
-                let chunks= task.into_chunks(self.config.threads as u64).await;
+                let chunks= task.into_chunks(self.config.threads as u64);
                 
                 // Creates a stream iter for downloading each chunk separately
                 let download_tasks= stream::iter((0..self.config.threads).map(|i| {
