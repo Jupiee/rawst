@@ -1,7 +1,7 @@
 use directories::{UserDirs, BaseDirs};
 use serde::Deserialize;
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct Config {
 
     pub download_path: String,

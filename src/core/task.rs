@@ -28,7 +28,7 @@ impl Chunk {
 }
 
 #[derive(Debug, Clone)]
-pub struct DownloadTask {
+pub struct HttpTask {
 
     pub url: String,
     pub filename: FileName,
@@ -40,11 +40,11 @@ pub struct DownloadTask {
 
 }
 
-impl DownloadTask {
+impl HttpTask {
 
     pub fn new(url: String, filename: FileName, cached_headers: HeaderMap) -> Self {
 
-        return DownloadTask {
+        return HttpTask {
 
             url,
             filename,
