@@ -13,10 +13,10 @@ use reqwest::Client;
 #[derive(Clone)]
 pub struct Engine {
 
-    pub config: Config,
-    pub client: Client,
-    pub http_handler: HttpHandler,
-    pub multi_bar: Arc<MultiProgress>
+    config: Config,
+    client: Client,
+    http_handler: HttpHandler,
+    multi_bar: Arc<MultiProgress>
 
 }
 
