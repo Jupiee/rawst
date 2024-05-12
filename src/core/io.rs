@@ -8,9 +8,8 @@ use std::sync::atomic::{AtomicU64, Ordering};
 
 use futures::{future::join_all, stream::StreamExt};
 use reqwest::Response;
-use tokio::fs::{File, remove_file, create_dir_all};
+use tokio::fs::{File, remove_file};
 use tokio::io::{AsyncReadExt, AsyncWriteExt, BufReader, BufWriter};
-use toml::from_str;
 use directories::BaseDirs;
 use indicatif::ProgressBar;
 
@@ -90,47 +89,6 @@ pub async fn create_file(filename: String, response: Response, pb: ProgressBar, 
     }
 
     Ok(())
-
-}
-
-pub async fn build_config() -> Result<Config, RawstErr> {
-
-    let config= Config::default();
-
-    let content= format!(
-        "download_path = {:?}\ncache_path= {:?}\nconfig_path= {:?}\nthreads= {:?}",
-        config.download_path, config.cache_path, config.config_path, config.threads);
-
-    let root_path= Path::new(&config.config_path).join("rawst");
-    let config_file_path= &root_path.join("config.toml");
-
-    create_dir_all(root_path).await.expect("Failed to create config directory");
-    create_dir_all(&config.cache_path).await.expect("Failed to create cache directory");
-
-    let mut config_file= File::create(config_file_path).await.map_err(|e| RawstErr::FileError(e))?;
-
-    config_file.write_all(&content.as_bytes()).await.map_err(|e| RawstErr::FileError(e))?;
-
-    Ok(config)
-
-}
-
-pub async fn load_config() -> Result<Config, RawstErr> {
-
-    let config_dir= BaseDirs::new().unwrap()
-        .data_local_dir()
-        .join("rawst")
-        .join("config.toml");
-
-    let mut file_content= String::new();
-
-    let mut file= File::open(config_dir).await.map_err(|e| RawstErr::FileError(e))?;
-
-    file.read_to_string(&mut file_content).await.map_err(|e| RawstErr::FileError(e))?;
-
-    let config: Config = from_str(&file_content).unwrap();
-
-    Ok(config)
 
 }
 

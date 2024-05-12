@@ -2,7 +2,7 @@ use crate::core::config::Config;
 use crate::core::task::HttpTask;
 use crate::core::errors::RawstErr;
 use crate::core::engine::Engine;
-use crate::core::io::{read_links, build_config, load_config, config_exist};
+use crate::core::io::{read_links, config_exist};
 use crate::cli::interrupt_handler::{TaskType, create_interrupt_handler};
 
 use clap::{value_parser, crate_authors, crate_name, crate_description, crate_version};
@@ -122,8 +122,8 @@ pub async fn init() -> Result<(), RawstErr> {
     let args= build_command();
     let config= match config_exist() {
 
-        true => load_config().await?,
-        false => build_config().await?
+        true => Config::load().await?,
+        false => Config::build().await?
 
     };
 

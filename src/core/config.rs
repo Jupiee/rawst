@@ -1,5 +1,12 @@
+use crate::core::errors::RawstErr;
+
+use std::path::Path;
+
 use directories::{UserDirs, BaseDirs};
 use serde::Deserialize;
+use tokio::fs::{File, create_dir_all};
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use toml::from_str;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct Config {
@@ -31,6 +38,51 @@ impl Default for Config {
         
         }
 
+    }
+
+}
+
+impl Config {
+
+    pub async fn build() -> Result<Config, RawstErr> {
+
+        let default= Config::default();
+
+        let content= format!(
+            "download_path = {:?}\ncache_path= {:?}\nconfig_path= {:?}\nthreads= {:?}",
+            default.download_path, default.cache_path, default.config_path, default.threads);
+    
+        let root_path= Path::new(&default.config_path).join("rawst");
+        let config_file_path= &root_path.join("config.toml");
+    
+        create_dir_all(root_path).await.expect("Failed to create config directory");
+        create_dir_all(&default.cache_path).await.expect("Failed to create cache directory");
+    
+        let mut config_file= File::create(config_file_path).await.map_err(|e| RawstErr::FileError(e))?;
+    
+        config_file.write_all(&content.as_bytes()).await.map_err(|e| RawstErr::FileError(e))?;
+    
+        Ok(default)
+    
+    }
+
+    pub async fn load() -> Result<Config, RawstErr> {
+
+        let config_dir= BaseDirs::new().unwrap()
+            .data_local_dir()
+            .join("rawst")
+            .join("config.toml");
+    
+        let mut file_content= String::new();
+    
+        let mut file= File::open(config_dir).await.map_err(|e| RawstErr::FileError(e))?;
+    
+        file.read_to_string(&mut file_content).await.map_err(|e| RawstErr::FileError(e))?;
+    
+        let config: Config = from_str(&file_content).unwrap();
+    
+        Ok(config)
+    
     }
 
 }
