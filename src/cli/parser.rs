@@ -1,8 +1,9 @@
 use crate::core::config::Config;
 use crate::core::task::HttpTask;
-use crate::core::io::{read_links, build_config, load_config, config_exist};
 use crate::core::errors::RawstErr;
 use crate::core::engine::Engine;
+use crate::core::io::{read_links, build_config, load_config, config_exist};
+use crate::cli::interrupt_handler::{TaskType, create_interrupt_handler};
 
 use clap::{value_parser, crate_authors, crate_name, crate_description, crate_version};
 use clap::{Arg, ArgMatches, Command};
@@ -57,6 +58,10 @@ async fn url_download(args: ArgMatches, config: Config) -> Result<(), RawstErr> 
 
     let http_task= engine.create_http_task(url, save_as, threads).await?;
 
+    let task_clone= TaskType::Single(http_task.clone());
+
+    create_interrupt_handler(task_clone);
+
     engine.http_download(http_task).await?;
 
     Ok(())
@@ -86,6 +91,10 @@ async fn list_download(args: ArgMatches, mut config: Config) -> Result<(), Rawst
         http_tasks.push(http_task);
 
     }
+
+    let task_list_clone= TaskType::List(http_tasks.clone());
+
+    create_interrupt_handler(task_list_clone);
 
     let http_download_tasks= stream::iter((0..http_tasks.len()).map(|i| {
 
