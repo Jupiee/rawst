@@ -4,8 +4,6 @@ use crate::core::utils::{extract_filename_from_header, extract_filename_from_url
 use crate::core::http_handler::HttpHandler;
 use crate::core::errors::RawstErr;
 
-use std::sync::Arc;
-
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use reqwest::Client;
 
@@ -13,10 +11,12 @@ use reqwest::Client;
 #[derive(Clone)]
 pub struct Engine {
 
+    // Note: History structure will be made here
+    // for writing download history in download functions
     config: Config,
     client: Client,
     http_handler: HttpHandler,
-    multi_bar: Arc<MultiProgress>
+    multi_bar: MultiProgress
 
 }
 
@@ -32,7 +32,7 @@ impl Engine {
             config,
             client,
             http_handler,
-            multi_bar: Arc::new(MultiProgress::new())
+            multi_bar: MultiProgress::new()
 
         }
 
