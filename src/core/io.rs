@@ -1,10 +1,10 @@
 use crate::core::errors::RawstErr;
 use crate::core::utils::FileName;
 use crate::core::config::Config;
+use crate::core::task::HttpTask;
 
-use std::sync::Arc;
 use std::path::Path;
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::Ordering;
 
 use futures::{future::join_all, stream::StreamExt};
 use reqwest::Response;
@@ -66,7 +66,7 @@ pub async fn merge_files(filename: &FileName, config: &Config) -> Result<(), Raw
 
 }
 
-pub async fn create_file(filename: String, response: Response, pb: ProgressBar, downloaded: Arc<AtomicU64>, base_path: &String) -> Result<(), RawstErr> {
+pub async fn create_file(filename: String, iteration_number: Option<usize>, task: HttpTask, response: Response, pb: ProgressBar, base_path: &String) -> Result<(), RawstErr> {
 
     let filepath= Path::new(base_path).join(filename);
 
@@ -77,14 +77,24 @@ pub async fn create_file(filename: String, response: Response, pb: ProgressBar, 
     // Recieves bytes as stream and write them into the a file
     while let Some(chunk) = stream.next().await {
 
+        //let chunk_downloaded= chunk_downloaded.clone();
         let chunk= chunk.map_err(|e| RawstErr::HttpError(e))?;
 
         file.write_all(&chunk).await.map_err(|e| RawstErr::FileError(e))?;
 
-        // Updates the progressbar
+        // Updates total download bytes and the progressbar
         let chunk_size= chunk.len() as u64;
-        downloaded.fetch_add(chunk_size, Ordering::SeqCst);
-        pb.set_position(downloaded.load(Ordering::SeqCst));
+        task.total_downloaded.fetch_add(chunk_size, Ordering::SeqCst);
+        pb.set_position(task.total_downloaded.load(Ordering::SeqCst));
+
+        // Updates downloaded bytes for each chunk
+        if iteration_number.is_some() {
+
+            let i= iteration_number.unwrap();
+
+            task.chunks[i].downloaded.fetch_add(chunk_size, Ordering::SeqCst);
+
+        }
     
     }
 

@@ -32,27 +32,23 @@ impl HttpHandler {
 
             1 => {
 
-                let response= self.client.get(task.url)
+                let response= self.client.get(&task.url)
                     .send()
                     .await
                     .map_err(|_| RawstErr::Unreachable)?;
 
                 if response.status().is_success() {
 
-                    create_file(task.filename.to_string(), response, progressbar.clone(), task.downloaded, &config.download_path).await?;
+                    create_file(task.filename.to_string(), None, task, response, progressbar.clone(), &config.download_path).await?;
     
                 }
 
             },
             _ => {
-
-                let chunks= task.into_chunks(config.threads as u64);
                 
                 // Creates a stream iter for downloading each chunk separately
                 let download_tasks= stream::iter((0..config.threads).map(|i| {
 
-                    let file_chunk= &chunks[i];
-                    
                     let client= &self.client;
                     let progressbar= progressbar.clone();
                     let task= task.clone();
@@ -60,9 +56,9 @@ impl HttpHandler {
                     // Creates closure for each request and IO operation
                     // Each closure has separate IO operation
                     async move {
-                        
-                        let response= client.get(task.url)
-                            .header(RANGE, format!("bytes={}-{}", file_chunk.x_offset, file_chunk.y_offset))
+                    
+                        let response= client.get(&task.url)
+                            .header(RANGE, format!("bytes={}-{}", &task.chunks[i].x_offset, &task.chunks[i].y_offset))
                             .send()
                             .await
                             .map_err(|e| RawstErr::HttpError(e))?;
@@ -71,7 +67,7 @@ impl HttpHandler {
 
                             let temp_filepath= format!("{}-{}.tmp", task.filename.stem, i);
 
-                            create_file(temp_filepath, response, progressbar, task.downloaded, &config.cache_path).await?;
+                            create_file(temp_filepath, Some(i), task, response, progressbar, &config.cache_path).await?;
 
                         }
 

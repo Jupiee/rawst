@@ -84,7 +84,7 @@ impl Engine {
             
         }
 
-        let task= HttpTask::new(url, filename, cached_headers);
+        let mut task= HttpTask::new(url, filename, cached_headers, self.config.threads);
 
         // checks if the server allows to receive byte ranges for concurrent download
         // otherwise uses single thread
@@ -93,6 +93,12 @@ impl Engine {
             println!("Warning!: Server doesn't allow partial content, sequentially downloading..");
             self.config.threads= 1
     
+        }
+
+        if self.config.threads > 1 {
+
+            task.into_chunks(self.config.threads as u64)
+
         }
 
         return Ok(task)
