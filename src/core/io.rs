@@ -77,7 +77,6 @@ pub async fn create_file(filename: String, iteration_number: Option<usize>, task
     // Recieves bytes as stream and write them into the a file
     while let Some(chunk) = stream.next().await {
 
-        //let chunk_downloaded= chunk_downloaded.clone();
         let chunk= chunk.map_err(|e| RawstErr::HttpError(e))?;
 
         file.write_all(&chunk).await.map_err(|e| RawstErr::FileError(e))?;

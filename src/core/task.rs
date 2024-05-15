@@ -77,8 +77,6 @@ impl HttpTask {
 
         let chunk_size= total_size / number_of_chunks;
 
-        //let mut chunks : Vec<Chunk> = Vec::with_capacity(number_of_chunks as usize);
-
         (0..number_of_chunks).into_iter().for_each(|i| {
 
             // Calculates start and end byte offset for each chunk
