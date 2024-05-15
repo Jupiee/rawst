@@ -66,9 +66,37 @@ pub async fn merge_files(filename: &FileName, config: &Config) -> Result<(), Raw
 
 }
 
-pub async fn create_file(filename: String, iteration_number: Option<usize>, task: HttpTask, response: Response, pb: ProgressBar, base_path: &String) -> Result<(), RawstErr> {
+pub async fn create_file(task: HttpTask, response: Response, pb: &ProgressBar, base_path: &String) -> Result<(), RawstErr> {
 
-    let filepath= Path::new(base_path).join(filename);
+    let filepath= Path::new(base_path).join(&task.filename.to_string());
+
+    let mut file= File::create(filepath).await.map_err(|e| RawstErr::FileError(e))?;
+
+    let mut stream= response.bytes_stream();
+
+    // Recieves bytes as stream and write them into the a file
+    while let Some(chunk) = stream.next().await {
+
+        let chunk= chunk.map_err(|e| RawstErr::HttpError(e))?;
+
+        file.write_all(&chunk).await.map_err(|e| RawstErr::FileError(e))?;
+
+        // Updates total download bytes and the progressbar
+        let chunk_size= chunk.len() as u64;
+        task.total_downloaded.fetch_add(chunk_size, Ordering::SeqCst);
+        pb.set_position(task.total_downloaded.load(Ordering::SeqCst));
+    
+    }
+
+    Ok(())
+
+}
+
+pub async fn create_cache(chunk_number: usize, task: HttpTask, response: Response, pb: &ProgressBar, base_path: &String) -> Result<(), RawstErr> {
+
+    let temp_filepath= format!("{}-{}.tmp", task.filename.stem, chunk_number);
+
+    let filepath= Path::new(base_path).join(temp_filepath);
 
     let mut file= File::create(filepath).await.map_err(|e| RawstErr::FileError(e))?;
 
@@ -87,13 +115,7 @@ pub async fn create_file(filename: String, iteration_number: Option<usize>, task
         pb.set_position(task.total_downloaded.load(Ordering::SeqCst));
 
         // Updates downloaded bytes for each chunk
-        if iteration_number.is_some() {
-
-            let i= iteration_number.unwrap();
-
-            task.chunks[i].downloaded.fetch_add(chunk_size, Ordering::SeqCst);
-
-        }
+        task.chunks[chunk_number].downloaded.fetch_add(chunk_size, Ordering::SeqCst);
     
     }
 

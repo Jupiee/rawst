@@ -7,7 +7,6 @@ use crate::core::errors::RawstErr;
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use reqwest::Client;
 
-
 #[derive(Clone)]
 pub struct Engine {
 
@@ -41,12 +40,19 @@ impl Engine {
     pub async fn http_download(&self, task: HttpTask) -> Result<(), RawstErr> {
 
         let progressbar= self.multi_bar.add(ProgressBar::new(task.content_length()).with_message(task.filename.to_string()));
-
+        
         progressbar.set_style(ProgressStyle::with_template("{msg} | {bytes}/{total_bytes} | [{wide_bar:.green/white}] | {eta} | [{decimal_bytes_per_sec}]")
         .unwrap()
         .progress_chars("=>_"));
+    
+        match self.config.threads {
 
-        self.http_handler.download_test(task, progressbar, &self.config).await?;
+            1 => self.http_handler.sequential_download(task, &progressbar, &self.config).await?,
+            _ => self.http_handler.concurrent_download(task, &progressbar, &self.config).await?
+
+        }
+
+        progressbar.finish_with_message("Downloads finished");
 
         Ok(())
 

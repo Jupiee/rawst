@@ -1,4 +1,4 @@
-use crate::core::io::{merge_files, create_file};
+use crate::core::io::{merge_files, create_file, create_cache};
 use crate::core::task::HttpTask;
 use crate::core::errors::RawstErr;
 use crate::core::config::Config;
@@ -26,66 +26,56 @@ impl HttpHandler {
         
     }
 
-    pub async fn download_test(&self, task: HttpTask, progressbar: ProgressBar, config: &Config) -> Result<(), RawstErr> {
+    pub async fn sequential_download(&self, task: HttpTask, progressbar: &ProgressBar, config: &Config) -> Result<(), RawstErr> {
 
-        match config.threads {
+        let response= self.client.get(&task.url)
+            .send()
+            .await
+            .map_err(|_| RawstErr::Unreachable)?;
 
-            1 => {
+        if response.status().is_success() {
 
-                let response= self.client.get(&task.url)
+            create_file(task, response, progressbar, &config.download_path).await?;
+
+        }
+
+        Ok(())
+
+    }
+
+    pub async fn concurrent_download(&self, task: HttpTask, progressbar: &ProgressBar, config: &Config) -> Result<(), RawstErr> {
+
+        // Creates a stream iter for downloading each chunk separately
+        let download_tasks= stream::iter((0..config.threads).map(|i| {
+
+            let client= &self.client;
+            let task= task.clone();
+
+            // Creates closure for each request and IO operation
+            // Each closure has separate IO operation
+            async move {
+            
+                let response= client.get(&task.url)
+                    .header(RANGE, format!("bytes={}-{}", &task.chunks[i].x_offset, &task.chunks[i].y_offset))
                     .send()
                     .await
-                    .map_err(|_| RawstErr::Unreachable)?;
+                    .map_err(|e| RawstErr::HttpError(e))?;
 
                 if response.status().is_success() {
 
-                    create_file(task.filename.to_string(), None, task, response, progressbar.clone(), &config.download_path).await?;
-    
+                    create_cache(i, task, response, progressbar, &config.cache_path).await?;
+
                 }
 
-            },
-            _ => {
-                
-                // Creates a stream iter for downloading each chunk separately
-                let download_tasks= stream::iter((0..config.threads).map(|i| {
-
-                    let client= &self.client;
-                    let progressbar= progressbar.clone();
-                    let task= task.clone();
-
-                    // Creates closure for each request and IO operation
-                    // Each closure has separate IO operation
-                    async move {
-                    
-                        let response= client.get(&task.url)
-                            .header(RANGE, format!("bytes={}-{}", &task.chunks[i].x_offset, &task.chunks[i].y_offset))
-                            .send()
-                            .await
-                            .map_err(|e| RawstErr::HttpError(e))?;
-
-                        if response.status().is_success() {
-
-                            let temp_filepath= format!("{}-{}.tmp", task.filename.stem, i);
-
-                            create_file(temp_filepath, Some(i), task, response, progressbar, &config.cache_path).await?;
-
-                        }
-
-                        Ok::<_, RawstErr>(())
-                    
-                    }
-
-                }));
-
-                download_tasks.buffer_unordered(config.threads).collect::<Vec<_>>().await;
-
-                merge_files(&task.filename, config).await?;
-
+                Ok::<_, RawstErr>(())
+            
             }
 
-        }
-        
-        progressbar.finish();
+        }));
+
+        download_tasks.buffer_unordered(config.threads).collect::<Vec<_>>().await;
+
+        merge_files(&task.filename, config).await?;
 
         Ok(())
 
