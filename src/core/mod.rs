@@ -1,4 +1,5 @@
 pub mod engine;
+pub mod history;
 pub mod http_handler;
 pub mod io;
 pub mod task;

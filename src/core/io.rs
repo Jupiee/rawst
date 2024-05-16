@@ -125,12 +125,15 @@ pub async fn create_cache(chunk_number: usize, task: HttpTask, response: Respons
 
 pub fn config_exist() -> bool {
 
-    let config_file_path= BaseDirs::new().unwrap()
+    let base_path= BaseDirs::new().unwrap()
         .data_local_dir()
-        .join("rawst")
-        .join("config.toml");
+        .join("rawst");
 
-    return config_file_path.exists()
+    let config_file_path= &base_path.join("config.toml");
+
+    let history_file_path= &base_path.join("history.toml");
+
+    return config_file_path.exists() && history_file_path.exists()
 
 }
 
