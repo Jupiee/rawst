@@ -1,16 +1,22 @@
 use crate::core::errors::RawstErr;
-use crate::core::task::HttpTask;
+use crate::core::task::{HttpTask, Getter};
 use crate::core::config::Config;
 
 use std::path::Path;
-use std::sync::atomic::Ordering;
 
 use serde::{Deserialize, Serialize};
 use chrono::prelude::Local;
 use tokio::{fs::File, io::AsyncWriteExt};
 use toml;
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Deserialize, Serialize)]
+struct Downloads {
+
+    record: Vec<Record>
+
+}
+
+#[derive(Clone, Deserialize, Serialize)]
 struct Record {
 
     pub url: String,
@@ -41,45 +47,55 @@ impl Record {
 
 }
 
-struct History {
+pub struct History {
 
-    pub history_file: File
+    pub history_file_path: String
 
 }
 
 impl History {
 
-    pub async fn new(local_dir_path: String) -> Result<History, RawstErr> {
+    pub fn new(local_dir_path: String) -> Self {
 
-        let file_path= Path::new(&local_dir_path)
-            .join("rawst")
-            .join("history.toml")
-            .display()
-            .to_string();
+        History {
 
-        let history_file= File::open(file_path).await.map_err(|e| RawstErr::FileError(e))?;
+            history_file_path: local_dir_path
 
-        Ok(History {
-
-            history_file
-
-        })
+        }
 
     }
 
-    pub async fn add_record(&mut self, task: HttpTask, config: Config) -> Result<(), RawstErr> {
+    pub async fn add_record(&self, task: &HttpTask, config: &Config) -> Result<(), RawstErr> {
+
+        let file_path= Path::new(&self.history_file_path)
+            .join("rawst")
+            .join("history.toml");
+
+        let mut history_file= File::options()
+            .append(true)
+            .open(file_path)
+            .await
+            .map_err(|e| RawstErr::FileError(e))?;
 
         let record= Record::new(
-            task.url,
+            task.url.clone(),
             task.filename.to_string(),
-            task.total_downloaded.load(Ordering::SeqCst),
-            config.download_path,
+            task.get_downloaded(),
+            config.download_path.clone(),
             config.threads
         );
 
-        let toml= toml::to_string(&record).unwrap();
+        let download= Downloads {
 
-        self.history_file.write_all(&toml.as_bytes()).await.map_err(|e| RawstErr::FileError(e))?;
+            record: vec![record]
+
+        };
+
+        let toml= toml::to_string(&download).unwrap();
+
+        let content= format!("{}\n", toml);
+
+        history_file.write_all(&content.as_bytes()).await.map_err(|e| RawstErr::FileError(e))?;
 
         Ok(())
 

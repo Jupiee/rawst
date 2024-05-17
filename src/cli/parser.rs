@@ -7,7 +7,6 @@ use crate::cli::interrupt_handler::{TaskType, create_interrupt_handler};
 
 use clap::{value_parser, crate_authors, crate_name, crate_description, crate_version};
 use clap::{Arg, ArgMatches, Command};
-use futures::stream::{self, StreamExt};
 
 fn build_command() -> ArgMatches {
 
@@ -96,22 +95,7 @@ async fn list_download(args: ArgMatches, mut config: Config) -> Result<(), Rawst
 
     create_interrupt_handler(task_list_clone);
 
-    let http_download_tasks= stream::iter((0..http_tasks.len()).map(|i| {
-
-        let threaded_task= http_tasks[i].clone();
-        let engine_clone= engine.clone();
-
-        async move {
-
-            engine_clone.http_download(threaded_task).await?;
-
-            Ok::<_, RawstErr>(())
-
-        }
-
-    }));
-
-    http_download_tasks.buffer_unordered(http_tasks.len()).collect::<Vec<_>>().await;
+    engine.list_http_download(http_tasks).await?;
 
     Ok(())
 

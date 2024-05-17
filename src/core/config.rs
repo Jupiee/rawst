@@ -58,7 +58,7 @@ impl Config {
         create_dir_all(&default.cache_path).await.expect("Failed to create cache directory");
     
         let mut config_file= File::create(config_file_path).await.map_err(|e| RawstErr::FileError(e))?;
-        let history_file= File::create(history_file_path).await.map_err(|e| RawstErr::FileError(e))?;
+        File::create(history_file_path).await.map_err(|e| RawstErr::FileError(e))?;
     
         config_file.write_all(&content.as_bytes()).await.map_err(|e| RawstErr::FileError(e))?;
     

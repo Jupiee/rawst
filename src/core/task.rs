@@ -4,11 +4,18 @@ use std::sync::{atomic::{AtomicU64, Ordering}, Arc};
 
 use reqwest::header::HeaderMap;
 
-#[derive(Debug, Clone)]
+// Abstract trait for getting download bytes
+pub trait Getter {
+
+    fn get_bytes_left(&self) -> u64;
+
+    fn get_downloaded(&self) -> u64;
+
+}
+
+#[derive(Clone)]
 pub struct Chunk {
 
-    // subtract y_offset (total size of the chunk) with downloaded bytes to get remaining bytes
-    
     pub x_offset: u64,  // x offset is starting byte
     pub y_offset: u64,  // y offset is end byte
 
@@ -31,17 +38,27 @@ impl Chunk {
 
     }
 
-    pub fn get_bytes_left(&self) -> u64 {
+}
+
+impl Getter for Chunk {
+
+    fn get_bytes_left(&self) -> u64 {
 
         let downloaded= self.downloaded.load(Ordering::SeqCst);
 
-        return self.y_offset - downloaded;
+        return self.y_offset - downloaded
+
+    }
+
+    fn get_downloaded(&self) -> u64 {
+        
+        return self.downloaded.load(Ordering::SeqCst)
 
     }
 
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct HttpTask {
 
     pub url: String,
@@ -52,6 +69,24 @@ pub struct HttpTask {
     // Cached headermap from Head request
     // Efficient for header values retrieval
     headers: HeaderMap
+
+}
+
+impl Getter for HttpTask {
+
+    fn get_bytes_left(&self) -> u64 {
+        
+        let downloaded= self.total_downloaded.load(Ordering::SeqCst);
+
+        return self.content_length() - downloaded
+
+    }
+
+    fn get_downloaded(&self) -> u64 {
+        
+        return self.total_downloaded.load(Ordering::SeqCst)
+
+    }
 
 }
 

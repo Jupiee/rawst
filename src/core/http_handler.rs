@@ -26,7 +26,7 @@ impl HttpHandler {
         
     }
 
-    pub async fn sequential_download(&self, task: HttpTask, progressbar: &ProgressBar, config: &Config) -> Result<(), RawstErr> {
+    pub async fn sequential_download(&self, task: &HttpTask, progressbar: &ProgressBar, config: &Config) -> Result<(), RawstErr> {
 
         let response= self.client.get(&task.url)
             .send()
@@ -43,20 +43,19 @@ impl HttpHandler {
 
     }
 
-    pub async fn concurrent_download(&self, task: HttpTask, progressbar: &ProgressBar, config: &Config) -> Result<(), RawstErr> {
+    pub async fn concurrent_download(&self, task: &HttpTask, progressbar: &ProgressBar, config: &Config) -> Result<(), RawstErr> {
 
         // Creates a stream iter for downloading each chunk separately
         let download_tasks= stream::iter((0..config.threads).map(|i| {
 
             let client= &self.client;
-            let task= task.clone();
 
             // Creates closure for each request and IO operation
             // Each closure has separate IO operation
             async move {
             
                 let response= client.get(&task.url)
-                    .header(RANGE, format!("bytes={}-{}", &task.chunks[i].x_offset, &task.chunks[i].y_offset))
+                    .header(RANGE, format!("bytes={}-{}", task.chunks[i].x_offset, task.chunks[i].y_offset))
                     .send()
                     .await
                     .map_err(|e| RawstErr::HttpError(e))?;

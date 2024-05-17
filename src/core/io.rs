@@ -66,7 +66,7 @@ pub async fn merge_files(filename: &FileName, config: &Config) -> Result<(), Raw
 
 }
 
-pub async fn create_file(task: HttpTask, response: Response, pb: &ProgressBar, base_path: &String) -> Result<(), RawstErr> {
+pub async fn create_file(task: &HttpTask, response: Response, pb: &ProgressBar, base_path: &String) -> Result<(), RawstErr> {
 
     let filepath= Path::new(base_path).join(&task.filename.to_string());
 
@@ -92,7 +92,7 @@ pub async fn create_file(task: HttpTask, response: Response, pb: &ProgressBar, b
 
 }
 
-pub async fn create_cache(chunk_number: usize, task: HttpTask, response: Response, pb: &ProgressBar, base_path: &String) -> Result<(), RawstErr> {
+pub async fn create_cache(chunk_number: usize, task: &HttpTask, response: Response, pb: &ProgressBar, base_path: &String) -> Result<(), RawstErr> {
 
     let temp_filepath= format!("{}-{}.tmp", task.filename.stem, chunk_number);
 

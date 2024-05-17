@@ -1,20 +1,20 @@
 use crate::core::config::Config;
 use crate::core::task::HttpTask;
-use crate::core::utils::{extract_filename_from_header, extract_filename_from_url, cache_headers};
 use crate::core::http_handler::HttpHandler;
+use crate::core::history::History;
 use crate::core::errors::RawstErr;
+use crate::core::utils::{extract_filename_from_header, extract_filename_from_url, cache_headers};
 
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
+use futures::stream::{self, StreamExt};
 use reqwest::Client;
 
-#[derive(Clone)]
 pub struct Engine {
 
-    // Note: History structure will be made here
-    // for writing download history in download functions
     config: Config,
     client: Client,
     http_handler: HttpHandler,
+    history_manager: History,
     multi_bar: MultiProgress
 
 }
@@ -25,12 +25,14 @@ impl Engine {
 
         let client= Client::new();
         let http_handler= HttpHandler::new(client.clone());
+        let history_manager= History::new(config.config_path.clone());
 
         Engine {
 
             config,
             client,
             http_handler,
+            history_manager,
             multi_bar: MultiProgress::new()
 
         }
@@ -47,13 +49,37 @@ impl Engine {
     
         match self.config.threads {
 
-            1 => self.http_handler.sequential_download(task, &progressbar, &self.config).await?,
-            _ => self.http_handler.concurrent_download(task, &progressbar, &self.config).await?
+            1 => self.http_handler.sequential_download(&task, &progressbar, &self.config).await?,
+            _ => self.http_handler.concurrent_download(&task, &progressbar, &self.config).await?
 
         }
 
-        progressbar.finish_with_message("Downloads finished");
+        progressbar.finish();
 
+        self.history_manager.add_record(&task, &self.config).await?;
+
+        Ok(())
+
+    }
+
+    pub async fn list_http_download(&self, tasks: Vec<HttpTask>) -> Result<(), RawstErr> {
+
+        let http_download_tasks= stream::iter((0..tasks.len()).map(|i| {
+
+            let threaded_task= tasks[i].clone();
+    
+            async move {
+    
+                self.http_download(threaded_task).await?;
+    
+                Ok::<_, RawstErr>(())
+    
+            }
+    
+        }));
+    
+        http_download_tasks.buffer_unordered(tasks.len()).collect::<Vec<_>>().await;
+    
         Ok(())
 
     }
