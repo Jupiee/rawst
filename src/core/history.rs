@@ -2,10 +2,12 @@ use crate::core::errors::RawstErr;
 use crate::core::task::{HttpTask, Getter};
 use crate::core::config::Config;
 
+//use std::collections::HashMap;
 use std::path::Path;
 
 use serde::{Deserialize, Serialize};
 use chrono::prelude::Local;
+use tokio::io::AsyncReadExt;
 use tokio::{fs::File, io::AsyncWriteExt};
 use toml;
 
@@ -96,6 +98,38 @@ impl History {
         let content= format!("{}\n", toml);
 
         history_file.write_all(&content.as_bytes()).await.map_err(|e| RawstErr::FileError(e))?;
+
+        Ok(())
+
+    }
+
+    pub async fn get_history(&self) -> Result<(), RawstErr> {
+
+        let file_path= Path::new(&self.history_file_path)
+            .join("rawst")
+            .join("history.toml");
+
+        let mut history_file= File::open(file_path)
+            .await
+            .map_err(|e| RawstErr::FileError(e))?;
+
+        let mut content= String::new();
+
+        history_file.read_to_string(&mut content).await.map_err(|e| RawstErr::FileError(e))?;
+
+        let value: toml::Value = toml::from_str(&content).unwrap();
+
+        if let Some(table) = value.as_table() {
+
+            println!("{}", table);
+
+        }
+
+        else {
+
+            println!("No records found");
+
+        }
 
         Ok(())
 

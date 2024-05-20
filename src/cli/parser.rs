@@ -2,6 +2,7 @@ use crate::core::config::Config;
 use crate::core::task::HttpTask;
 use crate::core::errors::RawstErr;
 use crate::core::engine::Engine;
+use crate::core::history::History;
 use crate::core::io::{read_links, config_exist};
 use crate::cli::interrupt_handler::{TaskType, create_interrupt_handler};
 
@@ -27,6 +28,12 @@ fn build_command() -> ArgMatches {
             .long("file")
             .value_parser(value_parser!(String))
             .help("Filepath to the file with links")
+        )
+        .arg(
+            Arg::new("History")
+            .long("history")
+            .action(clap::ArgAction::SetTrue)
+            .help("Display download history")
         )
         .arg(
             Arg::new("Saveas")
@@ -101,6 +108,16 @@ async fn list_download(args: ArgMatches, mut config: Config) -> Result<(), Rawst
 
 }
 
+async fn display_history(config: Config) -> Result<(), RawstErr> {
+
+    let history_manager= History::new(config.config_path);
+
+    history_manager.get_history().await?;
+
+    Ok(())
+
+}
+
 pub async fn init() -> Result<(), RawstErr> {
 
     let args= build_command();
@@ -124,6 +141,14 @@ pub async fn init() -> Result<(), RawstErr> {
         list_download(args, config).await?;
 
         return Ok(())
+
+    }
+
+    else if args.contains_id("History") {
+
+        display_history(config).await?;
+
+        return Ok(());
 
     }
 
