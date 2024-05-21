@@ -16,6 +16,7 @@ Snag your files efficiently with Rawst downloader, written in rust for blazingly
 - Sequential streamed downloads
 - Concurrent downloads with multiple segments
 - Multiple file downloads from a text file
+- Recordable history
 - Configurable config file
 - Detailed progress bars
 - Blazingly fast execution time
@@ -71,7 +72,7 @@ Options:
 * [ ] Custom headers support
 * [ ] Resumable downloads
 * [ ] Parallel downloads using cores
-* [ ] Download history
+* [x] Download history
 * [ ] Checksum with sha256
 * [x] Config files
 * [ ] Website link grabber
