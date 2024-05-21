@@ -18,7 +18,7 @@ struct Downloads {
 
 }
 
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Deserialize, Serialize)]
 struct Record {
 
     pub url: String,

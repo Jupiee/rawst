@@ -22,14 +22,14 @@ pub fn create_interrupt_handler(task_type: TaskType) {
 
                 for task in task_list {
 
-                    println!("\nReceived Interrupt for {}, downloaded bytes: {}", task.filename, task.total_downloaded.load(Ordering::SeqCst))
+                    println!("\nReceived Interrupt for {}, downloaded bytes: {}", task.filename, task.total_downloaded.load(Ordering::SeqCst));
 
                 }
 
             },
             TaskType::Single(task) => {
 
-                println!("\nReceived Interrupt for {}, downloaded bytes: {}", task.filename, task.total_downloaded.load(Ordering::SeqCst))
+                println!("\nReceived Interrupt for {}, downloaded bytes: {}", task.filename, task.total_downloaded.load(Ordering::SeqCst));
 
             }
 
