@@ -26,14 +26,14 @@ Snag your files efficiently with Rawst downloader, written in rust for blazingly
 <details>
     <summary>Linux</summary>
 
-- Download [Linux installer](../../releases/download/0.2.1/linux.sh) from releases and run it
+- Download [Linux installer](../../releases/download/0.3/linux.sh) from releases and run it
 
 </details>
 
 <details>
     <summary>Windows</summary>
 
-- Download [Windows installer](../../releases/download/0.2.1/windows.bat) from releases and run it
+- Download [Windows installer](../../releases/download/0.3/windows.bat) from releases and run it
 
 </details>
 
