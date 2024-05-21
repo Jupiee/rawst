@@ -2,7 +2,6 @@ use crate::core::errors::RawstErr;
 use crate::core::task::{HttpTask, Getter};
 use crate::core::config::Config;
 
-//use std::collections::HashMap;
 use std::path::Path;
 
 use serde::{Deserialize, Serialize};
