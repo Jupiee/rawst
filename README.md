@@ -54,8 +54,9 @@ Usage: rawst [OPTIONS]
 Options:
   -u, --url <Url>              Url to download
   -f, --file <InputFile>       Filepath to the file with links
+      --history                Display download history
   -s, --save-as <Saveas>       Save file as custom name
-  -m, --max-threads <Threads>  Maximum number of concurrent downloads [default: 1]
+  -m, --max-threads <Threads>  Maximum number of concurrent downloads
   -h, --help                   Print help
   -V, --version                Print version
 ```
