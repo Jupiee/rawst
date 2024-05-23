@@ -20,7 +20,7 @@ Snag your files efficiently with Rawst downloader, written in rust for blazingly
 - Configurable config file
 - Detailed progress bars
 - Blazingly fast execution time
-- Lightweight with less dependencies
+- Lightweight binary size
 
 ### 📦 **How to install Rawst?**
 <details>
