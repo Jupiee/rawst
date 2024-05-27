@@ -23,7 +23,6 @@ pub struct Chunk {
 
 }
 
-#[allow(dead_code)]
 impl Chunk {
 
     pub fn new(x_offset: u64, y_offset: u64) -> Self {
