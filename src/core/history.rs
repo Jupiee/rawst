@@ -9,6 +9,7 @@ use chrono::prelude::Local;
 use tokio::io::AsyncReadExt;
 use tokio::{fs::File, io::AsyncWriteExt};
 use toml;
+use base64::{Engine, prelude::BASE64_STANDARD};
 
 #[derive(Deserialize, Serialize)]
 struct Downloads {
@@ -20,6 +21,7 @@ struct Downloads {
 #[derive(Deserialize, Serialize)]
 struct Record {
 
+    pub id: String,
     pub url: String,
     pub file_name: String,
     pub file_size: u64,
@@ -33,14 +35,19 @@ impl Record {
 
     pub fn new(url: String, file_name: String, file_size: u64, file_location: String, threads_used: usize) -> Record {
 
+        let current_time= Local::now();
+
+        let encoded_timestamp= BASE64_STANDARD.encode(current_time.timestamp().to_be_bytes());
+
         Record {
 
+            id: encoded_timestamp,
             url,
             file_name,
             file_size,
             file_location,
             threads_used,
-            timestamp: Local::now().to_string()
+            timestamp: current_time.to_string()
 
         }
 
