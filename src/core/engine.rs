@@ -1,7 +1,7 @@
 use crate::core::config::Config;
 use crate::core::task::HttpTask;
 use crate::core::http_handler::HttpHandler;
-use crate::core::history::History;
+use crate::core::history::HistoryManager;
 use crate::core::errors::RawstErr;
 use crate::core::utils::{extract_filename_from_header, extract_filename_from_url, cache_headers};
 
@@ -14,7 +14,7 @@ pub struct Engine {
     config: Config,
     client: Client,
     http_handler: HttpHandler,
-    history_manager: History,
+    history_manager: HistoryManager,
     multi_bar: MultiProgress
 
 }
@@ -25,7 +25,7 @@ impl Engine {
 
         let client= Client::new();
         let http_handler= HttpHandler::new(client.clone());
-        let history_manager= History::new(config.config_path.clone());
+        let history_manager= HistoryManager::new(config.config_path.clone());
 
         Engine {
 
@@ -56,7 +56,7 @@ impl Engine {
 
         progressbar.finish();
 
-        self.history_manager.add_record(&task, &self.config).await?;
+        self.history_manager.add_record(&task, &self.config)?;
 
         Ok(())
 

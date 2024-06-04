@@ -2,7 +2,7 @@ use crate::core::config::Config;
 use crate::core::task::HttpTask;
 use crate::core::errors::RawstErr;
 use crate::core::engine::Engine;
-use crate::core::history::History;
+use crate::core::history::HistoryManager;
 use crate::core::io::{read_links, config_exist};
 use crate::cli::interrupt_handler::{TaskType, create_interrupt_handler};
 
@@ -60,13 +60,13 @@ async fn url_download(args: ArgMatches, config: Config) -> Result<(), RawstErr> 
 
     let threads= args.get_one::<usize>("Threads");
 
-    let mut engine= Engine::new(config);
+    let mut engine= Engine::new(config.clone());
 
     let http_task= engine.create_http_task(url, save_as, threads).await?;
 
     let task_clone= TaskType::Single(http_task.clone());
 
-    create_interrupt_handler(task_clone);
+    create_interrupt_handler(task_clone, config);
 
     engine.http_download(http_task).await?;
 
@@ -78,7 +78,7 @@ async fn list_download(args: ArgMatches, mut config: Config) -> Result<(), Rawst
 
     config.threads= 1;
 
-    let mut engine= Engine::new(config);
+    let mut engine= Engine::new(config.clone());
 
     let file_path= args.get_one::<String>("InputFile").unwrap();
 
@@ -100,7 +100,7 @@ async fn list_download(args: ArgMatches, mut config: Config) -> Result<(), Rawst
 
     let task_list_clone= TaskType::List(http_tasks.clone());
 
-    create_interrupt_handler(task_list_clone);
+    create_interrupt_handler(task_list_clone, config);
 
     engine.list_http_download(http_tasks).await?;
 
@@ -110,7 +110,7 @@ async fn list_download(args: ArgMatches, mut config: Config) -> Result<(), Rawst
 
 async fn display_history(config: Config) -> Result<(), RawstErr> {
 
-    let history_manager= History::new(config.config_path);
+    let history_manager= HistoryManager::new(config.config_path);
 
     history_manager.get_history().await?;
 

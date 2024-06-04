@@ -53,7 +53,7 @@ impl HttpHandler {
             // Creates closure for each request and IO operation
             // Each closure has separate IO operation
             async move {
-            
+
                 let response= client.get(&task.url)
                     .header(RANGE, format!("bytes={}-{}", task.chunks[i].x_offset, task.chunks[i].y_offset))
                     .send()
