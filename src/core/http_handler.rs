@@ -73,7 +73,7 @@ impl HttpHandler {
         }));
 
         download_tasks.buffer_unordered(config.threads).collect::<Vec<_>>().await;
-
+        
         merge_files(&task.filename, config).await?;
 
         Ok(())

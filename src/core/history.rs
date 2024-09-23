@@ -3,13 +3,12 @@ use crate::core::task::{HttpTask, Getter};
 use crate::core::config::Config;
 
 use std::path::Path;
-use std::fs::File;
-use std::io::{Read, Write};
+use std::fs;
 
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use chrono::prelude::Local;
-use toml;
-use base64::{Engine, prelude::BASE64_STANDARD};
+
 
 #[derive(Deserialize, Serialize)]
 struct Downloads {
@@ -18,7 +17,7 @@ struct Downloads {
 
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 struct Record {
 
     pub id: String,
@@ -28,28 +27,28 @@ struct Record {
     pub total_downloaded: u64,
     pub file_location: String,
     pub threads_used: usize,
-    pub timestamp: String
+    pub timestamp: String,
+    pub status: String
 
 }
 
 impl Record {
 
-    pub fn new(url: String, file_name: String, file_size: u64, total_downloaded: u64, file_location: String, threads_used: usize) -> Record {
+    pub fn new(id: String, url: String, file_name: String, file_size: u64, total_downloaded: u64, file_location: String, threads_used: usize) -> Record {
 
         let current_time= Local::now();
 
-        let encoded_timestamp= BASE64_STANDARD.encode(current_time.timestamp().to_be_bytes());
-
         Record {
 
-            id: encoded_timestamp,
+            id,
             url,
             file_name,
             file_size,
             total_downloaded,
             file_location,
             threads_used,
-            timestamp: current_time.to_string()
+            timestamp: current_time.to_string(),
+            status: "Pending".to_string()
 
         }
 
@@ -75,70 +74,139 @@ impl HistoryManager {
 
     }
 
-    pub fn add_record(&self, task: &HttpTask, config: &Config) -> Result<(), RawstErr> {
+    pub fn add_record(&self, task: &HttpTask, config: &Config, id: String) -> Result<(), RawstErr> {
 
         let file_path= Path::new(&self.history_file_path)
             .join("rawst")
-            .join("history.toml");
+            .join("history.json");
 
-        let mut history_file= File::options()
-            .append(true)
-            .open(file_path)
-            .map_err(|e| RawstErr::FileError(e))?;
+        let json_str = fs::read_to_string(&file_path).unwrap();
 
-        let record= Record::new(
+        let mut records: Vec<Record> = serde_json::from_str(&json_str).expect("There are no downloads");
+
+        let new_record= Record::new(
+            id,
             task.url.clone(),
             task.filename.to_string(),
             task.content_length(),
-            task.get_downloaded(),
+            task.get_bytes_downloaded(),
             config.download_path.clone(),
             config.threads
         );
 
-        let download= Downloads {
+        records.push(new_record);
 
-            record: vec![record]
+        let new_json_str= serde_json::to_string_pretty(&records).unwrap();
 
-        };
-
-        let toml= toml::to_string(&download).unwrap();
-
-        let content= format!("{}\n", toml);
-
-        history_file.write(&content.as_bytes()).map_err(|e| RawstErr::FileError(e))?;
+        fs::write(file_path, new_json_str).map_err(|e| RawstErr::FileError(e))?;
 
         Ok(())
 
     }
 
-    pub async fn get_history(&self) -> Result<(), RawstErr> {
+    pub fn update_record(&self, id: String) -> Result<(), RawstErr> {
 
         let file_path= Path::new(&self.history_file_path)
             .join("rawst")
-            .join("history.toml");
+            .join("history.json");
 
-        let mut history_file= File::open(file_path)
-            .map_err(|e| RawstErr::FileError(e))?;
+        let json_str = fs::read_to_string(&file_path).unwrap();
 
-        let mut content= String::new();
+        let mut records: Vec<Record> = serde_json::from_str(&json_str).expect("There are no downloads");
 
-        history_file.read_to_string(&mut content).map_err(|e| RawstErr::FileError(e))?;
+        for record in records.iter_mut() {
 
-        let value: toml::Value = toml::from_str(&content).unwrap();
+            if record.id == id {
+                
+                record.status= "Completed".to_string();
 
-        if let Some(table) = value.as_table() {
-
-            println!("{}", table);
+            }
 
         }
 
-        else {
+        let new_json_str= serde_json::to_string_pretty(&records).unwrap();
 
-            println!("No records found");
+        fs::write(file_path, new_json_str).map_err(|e| RawstErr::FileError(e))?;
+
+        Ok(())
+
+    }
+
+    pub fn get_history(&self) -> Result<(), RawstErr> {
+
+        let file_path= Path::new(&self.history_file_path)
+            .join("rawst")
+            .join("history.json");
+
+        let json_str = fs::read_to_string(file_path).unwrap();
+
+        let value: Value = serde_json::from_str(&json_str).expect("There are no downloads");
+        
+        let mut result = Vec::new();
+        
+        match value {
+
+            Value::Array(arr) => {
+
+                for item in arr.iter() {
+
+                    let record= serde_json::from_value::<Record>(item.clone());
+
+                    if record.is_ok() {
+
+                        result.push(record.unwrap());
+
+                    }
+
+                }
+
+            },
+            _ => {
+
+                println!("Expected an array");
+                return Ok(())
+
+            }
+        }
+
+        for record in result.iter() {
+
+            println!("Record\nid={:?}\nurl={:?}\nfile name={:?}\nfile size={:?}\ntotal downloaded={:?}\nfile location={:?}\nthreads used={:?}\ntimestamp={:?}\nstatus{:?}\n",
+            record.id, record.url, record.file_name, record.file_size, record.total_downloaded, record.file_location, record.threads_used, record.timestamp, record.status);
 
         }
 
         Ok(())
+
+    }
+
+    pub fn get_record(&self, id: &String) -> Result<Option<(String, usize, String, u64, String)>, RawstErr> {
+
+        let file_path= Path::new(&self.history_file_path)
+            .join("rawst")
+            .join("history.json");
+
+        let json_str = fs::read_to_string(&file_path).unwrap();
+
+        let mut records: Vec<Record> = serde_json::from_str(&json_str).expect("There are no downloads");
+
+        for record in records.iter_mut() {
+
+            if record.id == *id {
+                
+                let url= record.url.clone();
+                let threads= record.threads_used;
+                let filename= record.file_name.clone();
+                let file_size= record.file_size;
+                let status= record.status.clone();
+
+                return Ok(Some((url, threads, filename, file_size, status)))
+
+            }
+
+        }
+
+        Ok(None)
 
     }
 

@@ -4,6 +4,7 @@ use crate::core::config::Config;
 use crate::core::task::HttpTask;
 
 use std::path::Path;
+use std::fs;
 use std::sync::atomic::Ordering;
 
 use futures::{future::join_all, stream::StreamExt};
@@ -94,11 +95,17 @@ pub async fn create_file(task: &HttpTask, response: Response, pb: &ProgressBar, 
 
 pub async fn create_cache(chunk_number: usize, task: &HttpTask, response: Response, pb: &ProgressBar, base_path: &String) -> Result<(), RawstErr> {
 
+    if task.chunks[chunk_number].is_downloaded() {
+
+        return Ok(())
+
+    }
+
     let temp_filepath= format!("{}-{}.tmp", task.filename.stem, chunk_number);
 
     let filepath= Path::new(base_path).join(temp_filepath);
 
-    let mut file= File::create(filepath).await.map_err(|e| RawstErr::FileError(e))?;
+    let mut file= File::options().append(true).create(true).open(filepath).await.map_err(|e| RawstErr::FileError(e))?;
 
     let mut stream= response.bytes_stream();
 
@@ -109,8 +116,11 @@ pub async fn create_cache(chunk_number: usize, task: &HttpTask, response: Respon
 
         file.write_all(&chunk).await.map_err(|e| RawstErr::FileError(e))?;
 
+        file.flush().await.map_err(|e| RawstErr::FileError(e))?;
+
         // Updates total download bytes and the progressbar
         let chunk_size= chunk.len() as u64;
+        //total_chunk_streamed += chunk_size as usize;
         task.total_downloaded.fetch_add(chunk_size, Ordering::SeqCst);
         pb.set_position(task.total_downloaded.load(Ordering::SeqCst));
 
@@ -120,6 +130,61 @@ pub async fn create_cache(chunk_number: usize, task: &HttpTask, response: Respon
     }
 
     Ok(())
+
+}
+
+pub fn get_cache_sizes(filename: String, threads: usize, config: Config) -> Result<Vec<u64>, RawstErr> {
+
+    let mut cache_sizes: Vec<u64>= vec![];
+
+    match threads > 1 {
+
+        false => {
+
+            let path= Path::new(&config.download_path).join(filename);
+
+            let meta_data= fs::metadata(path).unwrap();
+
+            cache_sizes.push(meta_data.len());
+
+        },
+        true => {
+
+            (0..threads).into_iter().for_each(|i| {
+
+                let (filename, _extension)= filename.rsplit_once(".").unwrap();
+        
+                let formatted_temp_filename= format!("{}-{}.tmp", filename.trim(), i);
+        
+                let path= Path::new(&config.cache_path).join(formatted_temp_filename);
+        
+                let meta_data= fs::metadata(path).unwrap();
+        
+                cache_sizes.push(meta_data.len());
+        
+            });
+
+        }
+
+    }
+
+    /*(0..threads).into_iter().for_each(|i| {
+
+        let (filename, _extension)= filename.rsplit_once(".").unwrap();
+
+        let formatted_temp_filename= format!("{}-{}.tmp", filename.trim(), i);
+
+        let path= Path::new(&config.cache_path).join(formatted_temp_filename);
+
+        let meta_data= fs::metadata(path).unwrap();
+
+        cache_sizes.push(meta_data.len());
+
+    });*/
+
+    println!("{:?}", cache_sizes);
+
+    Ok(cache_sizes)
 
 }
 

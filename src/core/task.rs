@@ -7,13 +7,11 @@ use reqwest::header::HeaderMap;
 // Abstract trait for getting download bytes
 pub trait Getter {
 
-    fn get_bytes_left(&self) -> u64;
-
-    fn get_downloaded(&self) -> u64;
+    fn get_bytes_downloaded(&self) -> u64;
 
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Chunk {
 
     pub x_offset: u64,  // x offset is starting byte
@@ -37,19 +35,27 @@ impl Chunk {
 
     }
 
+    pub fn is_downloaded(&self) -> bool {
+
+        if self.downloaded.load(Ordering::SeqCst) == self.y_offset + 1 {
+
+            return true 
+
+        }
+
+        else {
+
+            false
+
+        }
+
+    }
+
 }
 
 impl Getter for Chunk {
 
-    fn get_bytes_left(&self) -> u64 {
-
-        let downloaded= self.downloaded.load(Ordering::SeqCst);
-
-        return self.y_offset - downloaded
-
-    }
-
-    fn get_downloaded(&self) -> u64 {
+    fn get_bytes_downloaded(&self) -> u64 {
         
         return self.downloaded.load(Ordering::SeqCst)
 
@@ -57,7 +63,7 @@ impl Getter for Chunk {
 
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct HttpTask {
 
     pub url: String,
@@ -73,15 +79,7 @@ pub struct HttpTask {
 
 impl Getter for HttpTask {
 
-    fn get_bytes_left(&self) -> u64 {
-        
-        let downloaded= self.total_downloaded.load(Ordering::SeqCst);
-
-        return self.content_length() - downloaded
-
-    }
-
-    fn get_downloaded(&self) -> u64 {
+    fn get_bytes_downloaded(&self) -> u64 {
         
         return self.total_downloaded.load(Ordering::SeqCst)
 
@@ -105,7 +103,7 @@ impl HttpTask {
 
     }
 
-    pub fn into_chunks(&mut self, number_of_chunks: u64) {
+    pub fn calculate_chunks(&mut self, number_of_chunks: u64) {
 
         let total_size= self.content_length();
 
@@ -141,6 +139,24 @@ impl HttpTask {
             }
 
         });
+
+    }
+
+    pub fn calculate_x_offsets(&mut self, offsets: &Vec<u64>) {
+
+        for (index, value) in offsets.iter().enumerate() {
+
+            println!("{:?}", self.chunks);
+
+            let difference= self.chunks[index].y_offset - self.chunks[index].x_offset;
+
+            if self.chunks[index].downloaded.load(Ordering::SeqCst) < difference {
+
+                self.chunks[index].x_offset= self.chunks[index].x_offset + *value;
+
+            }
+
+        }
 
     }
 

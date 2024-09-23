@@ -52,15 +52,16 @@ impl Config {
     
         let root_path= Path::new(&default.config_path).join("rawst");
         let config_file_path= &root_path.join("config.toml");
-        let history_file_path= &root_path.join("history.toml");
+        let history_file_path= &root_path.join("history.json");
     
         create_dir_all(root_path).await.expect("Failed to create config directory");
         create_dir_all(&default.cache_path).await.expect("Failed to create cache directory");
     
         let mut config_file= File::create(config_file_path).await.map_err(|e| RawstErr::FileError(e))?;
-        File::create(history_file_path).await.map_err(|e| RawstErr::FileError(e))?;
+        let mut history_file= File::create(history_file_path).await.map_err(|e| RawstErr::FileError(e))?;
     
         config_file.write_all(&content.as_bytes()).await.map_err(|e| RawstErr::FileError(e))?;
+        history_file.write_all("[\n\n]".as_bytes()).await.map_err(|e| RawstErr::FileError(e))?;
     
         Ok(default)
     
