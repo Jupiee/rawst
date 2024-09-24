@@ -196,7 +196,7 @@ pub fn config_exist() -> bool {
 
     let config_file_path= &base_path.join("config.toml");
 
-    let history_file_path= &base_path.join("history.toml");
+    let history_file_path= &base_path.join("history.json");
 
     return config_file_path.exists() && history_file_path.exists()
 
