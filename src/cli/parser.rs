@@ -96,6 +96,8 @@ async fn list_download(args: ArgMatches, mut config: Config) -> Result<(), Rawst
 
     let mut engine= Engine::new(config.clone());
 
+    let history_manager= HistoryManager::new(config.config_path.clone());
+
     let file_path= args.get_one::<String>("InputFile").unwrap();
 
     let link_string= read_links(file_path).await?;
@@ -104,11 +106,17 @@ async fn list_download(args: ArgMatches, mut config: Config) -> Result<(), Rawst
 
     let mut http_tasks: Vec<HttpTask> = Vec::new();
 
-    for url in url_list {
+    for (index, url) in url_list.iter().enumerate() {
 
         let url= url.to_string();
 
         let http_task= engine.create_http_task(url, None, None).await?;
+
+        let current_time= Local::now();
+
+        let encoded_timestamp_as_id= BASE64_STANDARD.encode(current_time.timestamp().to_be_bytes()) + &index.to_string();
+
+        history_manager.add_record(&http_task, &config, encoded_timestamp_as_id)?;
 
         http_tasks.push(http_task);
 
@@ -136,42 +144,53 @@ async fn resume_download(args: ArgMatches, config: Config) -> Result<(), RawstEr
 
     let history_manager= HistoryManager::new(config.config_path.clone());
 
-    let data= history_manager.get_record(&id)?;
+    let record= history_manager.get_record(&id)?;
 
-    if data.is_some() {
-        
-        // notice: I can also get total file size by getting content length through http_task object
-        let (url, threads, file_name, _total_file_size, status)= data.unwrap();
+    match record {
 
-        if status == "Pending" {
-        
-            let (file_stem, _)= file_name.rsplit_once(".").unwrap();
+        Some(data) => {
+
+            // notice: I can also get total file size by getting content length through http_task object
+            let (url, threads, file_name, _total_file_size, status)= data;
+
+            if status == "Pending" {
             
-            let mut engine= Engine::new(config.clone());
-            
-            let mut http_task= engine.create_http_task(url, Some(&file_stem.trim().to_owned()), Some(&threads)).await?;
-            
-            let cache_sizes= get_cache_sizes(file_name, threads, config).unwrap();
-            
-            for (i, chunk) in http_task.chunks.iter().enumerate() {
+                let (file_stem, _)= file_name.rsplit_once(".").unwrap();
                 
-                chunk.downloaded.fetch_add(cache_sizes[i], Ordering::SeqCst);
+                let mut engine= Engine::new(config.clone());
                 
+                let mut http_task= engine.create_http_task(url, Some(&file_stem.trim().to_owned()), Some(&threads)).await?;
+                
+                let cache_sizes= get_cache_sizes(file_name, threads, config).unwrap();
+                
+                for (i, chunk) in http_task.chunks.iter().enumerate() {
+                    
+                    chunk.downloaded.fetch_add(cache_sizes[i], Ordering::SeqCst);
+                    
+                }
+
+                http_task.calculate_x_offsets(&cache_sizes);
+                
+                http_task.total_downloaded.fetch_add(cache_sizes.iter().sum::<u64>(), Ordering::SeqCst);
+
+                engine.http_download(http_task).await?
+
             }
 
-            http_task.calculate_x_offsets(&cache_sizes);
-            
-            http_task.total_downloaded.fetch_add(cache_sizes.iter().sum::<u64>(), Ordering::SeqCst);
+            else {
 
-            engine.http_download(http_task).await?
+                println!("The file has already downloaded");
 
-        }
+                return Ok(());
 
-        else {
+            }
 
-            println!("The file has already downloaded");
+        },
+        None => {
 
-            return Ok(());
+            println!("Record with id {:?} not found", id);
+
+            return Ok(())
 
         }
 
