@@ -106,6 +106,8 @@ async fn list_download(args: ArgMatches, mut config: Config) -> Result<(), Rawst
 
     let mut http_tasks: Vec<HttpTask> = Vec::new();
 
+    let mut task_ids: Vec<String> = Vec::new();
+
     for (index, url) in url_list.iter().enumerate() {
 
         let url= url.to_string();
@@ -116,13 +118,21 @@ async fn list_download(args: ArgMatches, mut config: Config) -> Result<(), Rawst
 
         let encoded_timestamp_as_id= BASE64_STANDARD.encode(current_time.timestamp().to_be_bytes()) + &index.to_string();
 
-        history_manager.add_record(&http_task, &config, encoded_timestamp_as_id)?;
+        history_manager.add_record(&http_task, &config, encoded_timestamp_as_id.clone())?;
 
         http_tasks.push(http_task);
+
+        task_ids.push(encoded_timestamp_as_id);
 
     }
 
     engine.list_http_download(http_tasks).await?;
+
+    for id in task_ids.iter() {
+
+        history_manager.update_record(id.clone())?;
+        
+    }
 
     Ok(())
 
