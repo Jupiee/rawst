@@ -23,14 +23,12 @@ impl Engine {
 
         let client= Client::new();
         let http_handler= HttpHandler::new(client.clone());
-        //let history_manager= HistoryManager::new(config.config_path.clone());
 
         Engine {
 
             config,
             client,
             http_handler,
-            //history_manager,
             multi_bar: MultiProgress::new()
 
         }
@@ -44,6 +42,8 @@ impl Engine {
         progressbar.set_style(ProgressStyle::with_template("{msg} | {bytes}/{total_bytes} | [{wide_bar:.green/white}] | {eta} | [{decimal_bytes_per_sec}]")
         .unwrap()
         .progress_chars("=>_"));
+
+        println!("downloading with {:?} thread(s)", self.config.threads);
     
         match self.config.threads {
 
@@ -80,14 +80,7 @@ impl Engine {
 
     }
 
-    pub async fn create_http_task(&mut self, url: String, save_as: Option<&String>, threads: Option<&usize>) -> Result<HttpTask, RawstErr> {
-
-        // overrides the default count in config
-        if threads.is_some() {
-
-            self.config.threads= threads.unwrap().to_owned()
-
-        }
+    pub async fn create_http_task(&mut self, url: String, save_as: Option<&String>) -> Result<HttpTask, RawstErr> {
 
         // 8 threads are maximum
         // more than 8 threads could cause rate limiting

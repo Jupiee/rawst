@@ -62,7 +62,7 @@ fn build_command() -> ArgMatches {
 
 }
 
-async fn url_download(args: ArgMatches, config: Config) -> Result<(), RawstErr> {
+async fn url_download(args: ArgMatches, mut config: Config) -> Result<(), RawstErr> {
 
     let url= args.get_one::<String>("Url").unwrap().to_string();
 
@@ -70,9 +70,16 @@ async fn url_download(args: ArgMatches, config: Config) -> Result<(), RawstErr> 
 
     let threads= args.get_one::<usize>("Threads");
 
+    // overrides the default count in config
+    if threads.is_some() {
+
+        config.threads= threads.unwrap().to_owned()
+
+    }
+
     let mut engine= Engine::new(config.clone());
 
-    let http_task= engine.create_http_task(url, save_as, threads).await?;
+    let http_task= engine.create_http_task(url, save_as).await?;
 
     let history_manager= HistoryManager::new(config.config_path.clone());
 
@@ -112,7 +119,7 @@ async fn list_download(args: ArgMatches, mut config: Config) -> Result<(), Rawst
 
         let url= url.to_string();
 
-        let http_task= engine.create_http_task(url, None, None).await?;
+        let http_task= engine.create_http_task(url, None).await?;
 
         let current_time= Local::now();
 
@@ -148,7 +155,7 @@ async fn display_history(config: Config) -> Result<(), RawstErr> {
 
 }
 
-async fn resume_download(args: ArgMatches, config: Config) -> Result<(), RawstErr> {
+async fn resume_download(args: ArgMatches, mut config: Config) -> Result<(), RawstErr> {
 
     let id= args.get_one::<String>("Resume").unwrap().to_owned();
 
@@ -164,12 +171,14 @@ async fn resume_download(args: ArgMatches, config: Config) -> Result<(), RawstEr
             let (url, threads, file_name, _total_file_size, status)= data;
 
             if status == "Pending" {
+
+                config.threads= threads;
             
                 let (file_stem, _)= file_name.rsplit_once(".").unwrap();
                 
                 let mut engine= Engine::new(config.clone());
                 
-                let mut http_task= engine.create_http_task(url, Some(&file_stem.trim().to_owned()), Some(&threads)).await?;
+                let mut http_task= engine.create_http_task(url, Some(&file_stem.trim().to_owned())).await?;
                 
                 let cache_sizes= get_cache_sizes(file_name, threads, config).unwrap();
                 
