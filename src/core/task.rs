@@ -146,8 +146,6 @@ impl HttpTask {
 
         for (index, value) in offsets.iter().enumerate() {
 
-            println!("{:?}", self.chunks);
-
             let difference= self.chunks[index].y_offset - self.chunks[index].x_offset;
 
             if self.chunks[index].downloaded.load(Ordering::SeqCst) < difference {

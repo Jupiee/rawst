@@ -120,7 +120,6 @@ pub async fn create_cache(chunk_number: usize, task: &HttpTask, response: Respon
 
         // Updates total download bytes and the progressbar
         let chunk_size= chunk.len() as u64;
-        //total_chunk_streamed += chunk_size as usize;
         task.total_downloaded.fetch_add(chunk_size, Ordering::SeqCst);
         pb.set_position(task.total_downloaded.load(Ordering::SeqCst));
 
@@ -167,22 +166,6 @@ pub fn get_cache_sizes(filename: String, threads: usize, config: Config) -> Resu
         }
 
     }
-
-    /*(0..threads).into_iter().for_each(|i| {
-
-        let (filename, _extension)= filename.rsplit_once(".").unwrap();
-
-        let formatted_temp_filename= format!("{}-{}.tmp", filename.trim(), i);
-
-        let path= Path::new(&config.cache_path).join(formatted_temp_filename);
-
-        let meta_data= fs::metadata(path).unwrap();
-
-        cache_sizes.push(meta_data.len());
-
-    });*/
-
-    println!("{:?}", cache_sizes);
 
     Ok(cache_sizes)
 
