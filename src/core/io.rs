@@ -1,7 +1,7 @@
 use crate::core::errors::RawstErr;
 use crate::core::utils::FileName;
 use crate::core::config::Config;
-use crate::core::task::HttpTask;
+use crate::core::task::{HttpTask, ChunkType};
 
 use std::path::Path;
 use std::fs;
@@ -71,7 +71,7 @@ pub async fn create_file(task: &HttpTask, response: Response, pb: &ProgressBar, 
 
     let filepath= Path::new(base_path).join(&task.filename.to_string());
 
-    let mut file= File::create(filepath).await.map_err(|e| RawstErr::FileError(e))?;
+    let mut file= File::options().append(true).create(true).open(filepath).await.map_err(|e| RawstErr::FileError(e))?;
 
     let mut stream= response.bytes_stream();
 
@@ -95,37 +95,41 @@ pub async fn create_file(task: &HttpTask, response: Response, pb: &ProgressBar, 
 
 pub async fn create_cache(chunk_number: usize, task: &HttpTask, response: Response, pb: &ProgressBar, base_path: &String) -> Result<(), RawstErr> {
 
-    if task.chunks[chunk_number].is_downloaded() {
+    if let ChunkType::Multiple(chunks) = &task.chunk_data {
 
-        return Ok(())
+        if chunks[chunk_number].is_downloaded() {
 
-    }
-
-    let temp_filepath= format!("{}-{}.tmp", task.filename.stem, chunk_number);
-
-    let filepath= Path::new(base_path).join(temp_filepath);
-
-    let mut file= File::options().append(true).create(true).open(filepath).await.map_err(|e| RawstErr::FileError(e))?;
-
-    let mut stream= response.bytes_stream();
-
-    // Recieves bytes as stream and write them into the a file
-    while let Some(chunk) = stream.next().await {
-
-        let chunk= chunk.map_err(|e| RawstErr::HttpError(e))?;
-
-        file.write_all(&chunk).await.map_err(|e| RawstErr::FileError(e))?;
-
-        file.flush().await.map_err(|e| RawstErr::FileError(e))?;
-
-        // Updates total download bytes and the progressbar
-        let chunk_size= chunk.len() as u64;
-        task.total_downloaded.fetch_add(chunk_size, Ordering::SeqCst);
-        pb.set_position(task.total_downloaded.load(Ordering::SeqCst));
-
-        // Updates downloaded bytes for each chunk
-        task.chunks[chunk_number].downloaded.fetch_add(chunk_size, Ordering::SeqCst);
+            return Ok(())
     
+        }
+
+        let temp_filepath= format!("{}-{}.tmp", task.filename.stem, chunk_number);
+
+        let filepath= Path::new(base_path).join(temp_filepath);
+
+        let mut file= File::options().append(true).create(true).open(filepath).await.map_err(|e| RawstErr::FileError(e))?;
+
+        let mut stream= response.bytes_stream();
+
+        // Recieves bytes as stream and write them into the a file
+        while let Some(chunk) = stream.next().await {
+
+            let chunk= chunk.map_err(|e| RawstErr::HttpError(e))?;
+
+            file.write_all(&chunk).await.map_err(|e| RawstErr::FileError(e))?;
+
+            file.flush().await.map_err(|e| RawstErr::FileError(e))?;
+
+            // Updates total download bytes and the progressbar
+            let chunk_size= chunk.len() as u64;
+            task.total_downloaded.fetch_add(chunk_size, Ordering::SeqCst);
+            pb.set_position(task.total_downloaded.load(Ordering::SeqCst));
+
+            // Updates downloaded bytes for each chunk
+            chunks[chunk_number].downloaded.fetch_add(chunk_size, Ordering::SeqCst);
+        
+        }
+
     }
 
     Ok(())

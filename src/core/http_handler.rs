@@ -1,5 +1,5 @@
 use crate::core::io::{merge_files, create_file, create_cache};
-use crate::core::task::HttpTask;
+use crate::core::task::{HttpTask, ChunkType};
 use crate::core::errors::RawstErr;
 use crate::core::config::Config;
 
@@ -28,14 +28,34 @@ impl HttpHandler {
 
     pub async fn sequential_download(&self, task: &HttpTask, progressbar: &ProgressBar, config: &Config) -> Result<(), RawstErr> {
 
-        let response= self.client.get(&task.url)
+        if let ChunkType::Single(chunk) = &task.chunk_data {
+
+            let response= self.client.get(&task.url)
+                .header(RANGE, format!("bytes={}-{}", chunk.x_offset, chunk.y_offset))
+                .send()
+                .await
+                .map_err(|e| RawstErr::HttpError(e))?;
+
+                if response.status().is_success() {
+
+                    create_file(task, response, progressbar, &config.download_path).await?;
+        
+                }
+
+        }
+
+        else {
+
+            let response= self.client.get(&task.url)
             .send()
             .await
-            .map_err(|_| RawstErr::Unreachable)?;
+            .map_err(|e| RawstErr::HttpError(e))?;
 
-        if response.status().is_success() {
+            if response.status().is_success() {
 
-            create_file(task, response, progressbar, &config.download_path).await?;
+                create_file(task, response, progressbar, &config.download_path).await?;
+    
+            }
 
         }
 
@@ -54,15 +74,19 @@ impl HttpHandler {
             // Each closure has separate IO operation
             async move {
 
-                let response= client.get(&task.url)
-                    .header(RANGE, format!("bytes={}-{}", task.chunks[i].x_offset, task.chunks[i].y_offset))
-                    .send()
-                    .await
-                    .map_err(|e| RawstErr::HttpError(e))?;
+                if let ChunkType::Multiple(chunks) = &task.chunk_data {
 
-                if response.status().is_success() {
+                    let response= client.get(&task.url)
+                        .header(RANGE, format!("bytes={}-{}", chunks[i].x_offset, chunks[i].y_offset))
+                        .send()
+                        .await
+                        .map_err(|e| RawstErr::HttpError(e))?;
 
-                    create_cache(i, task, response, progressbar, &config.cache_path).await?;
+                    if response.status().is_success() {
+
+                        create_cache(i, task, response, progressbar, &config.cache_path).await?;
+
+                    }
 
                 }
 

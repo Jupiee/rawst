@@ -64,12 +64,21 @@ impl Getter for Chunk {
 }
 
 #[derive(Clone, Debug)]
+pub enum ChunkType {
+
+    Single(Chunk),
+    Multiple(Vec<Chunk>),
+    None
+
+}
+
+#[derive(Clone, Debug)]
 pub struct HttpTask {
 
     pub url: String,
     pub filename: FileName,
     pub total_downloaded: Arc<AtomicU64>,
-    pub chunks: Vec<Chunk>,
+    pub chunk_data: ChunkType,
 
     // Cached headermap from Head request
     // Efficient for header values retrieval
@@ -91,13 +100,23 @@ impl HttpTask {
 
     pub fn new(url: String, filename: FileName, cached_headers: HeaderMap, number_of_chunks: usize) -> Self {
 
+        let chunk_data= if number_of_chunks == 1 {
+
+            ChunkType::None
+
+        } else {
+
+            ChunkType::Multiple(Vec::with_capacity(number_of_chunks))
+
+        };
+
         return HttpTask {
 
             url,
             filename,
             headers: cached_headers,
             total_downloaded: Arc::new(AtomicU64::new(0)),
-            chunks: Vec::with_capacity(number_of_chunks)
+            chunk_data
 
         };
 
@@ -107,52 +126,89 @@ impl HttpTask {
 
         let total_size= self.content_length();
 
-        let chunk_size= total_size / number_of_chunks;
+        match &mut self.chunk_data {
 
-        (0..number_of_chunks).into_iter().for_each(|i| {
+            ChunkType::Single(chunk) => {
 
-            // Calculates start and end byte offset for each chunk
-            match i {
+                chunk.x_offset= 0;
+                chunk.y_offset= total_size;
 
-                0 => {
+            },
+            ChunkType::Multiple(chunks) => {
 
-                    self.chunks.push(Chunk::new(0, chunk_size));
+                let chunk_size= total_size / number_of_chunks;
 
-                },
-                last_chunk if last_chunk == number_of_chunks - 1 => {
+                (0..number_of_chunks).into_iter().for_each(|i| {
 
-                    let start= self.chunks[(i - 1) as usize].y_offset + 1;
-                    let end= total_size;
+                    match i {
 
-                    self.chunks.push(Chunk::new(start, end));
+                        0 => {
 
-                },
-                _ => {
+                            chunks.push(Chunk::new(0, chunk_size));
 
-                    let start= self.chunks[(i - 1) as usize].y_offset + 1;
-                    let end= start + chunk_size;
+                        },
+                        last_chunk if last_chunk == number_of_chunks - 1 => {
 
-                    self.chunks.push(Chunk::new(start, end));
+                            let start= chunks[(i - 1) as usize].y_offset + 1;
+                            let end= total_size;
 
-                }
+                            chunks.push(Chunk::new(start, end));
 
-            }
+                        },
+                        _ => {
 
-        });
+                            let start= chunks[(i - 1) as usize].y_offset + 1;
+                            let end= start + chunk_size;
+
+                            chunks.push(Chunk::new(start, end));
+
+                        }
+
+                    }
+
+                });
+
+            },
+            ChunkType::None => return
+
+        }
+
+    }
+
+    pub fn create_single_chunk(&mut self) {
+
+        self.chunk_data= ChunkType::Single(Chunk::new(0, 0));
 
     }
 
     pub fn calculate_x_offsets(&mut self, offsets: &Vec<u64>) {
 
-        for (index, value) in offsets.iter().enumerate() {
+        match &mut self.chunk_data {
 
-            let difference= self.chunks[index].y_offset - self.chunks[index].x_offset;
+            ChunkType::Single(chunk) => {
 
-            if self.chunks[index].downloaded.load(Ordering::SeqCst) < difference {
+                chunk.x_offset += offsets[0];
+                chunk.downloaded.fetch_add(offsets[0], Ordering::SeqCst);
 
-                self.chunks[index].x_offset= self.chunks[index].x_offset + *value;
+            },
+            ChunkType::Multiple(chunks) => {
 
-            }
+                for (index, value) in offsets.iter().enumerate() {
+
+                    chunks[index].downloaded.fetch_add(offsets[index], Ordering::SeqCst);
+
+                    let difference= chunks[index].y_offset - chunks[index].x_offset;
+        
+                    if chunks[index].downloaded.load(Ordering::SeqCst) < difference {
+        
+                        chunks[index].x_offset += *value;
+        
+                    }
+        
+                }
+
+            },
+            ChunkType::None => return
 
         }
 

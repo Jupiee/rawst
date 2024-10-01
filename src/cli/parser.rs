@@ -117,12 +117,13 @@ async fn list_download(args: ArgMatches, mut config: Config) -> Result<(), Rawst
 
     for (index, url) in url_list.iter().enumerate() {
 
-        let url= url.to_string();
+        let url= url.trim().to_string();
 
         let http_task= engine.create_http_task(url, None).await?;
 
         let current_time= Local::now();
 
+        // Adding index number to distinguish between each id of each task
         let encoded_timestamp_as_id= BASE64_STANDARD.encode(current_time.timestamp().to_be_bytes()) + &index.to_string();
 
         history_manager.add_record(&http_task, &config, encoded_timestamp_as_id.clone())?;
@@ -181,12 +182,6 @@ async fn resume_download(args: ArgMatches, mut config: Config) -> Result<(), Raw
                 let mut http_task= engine.create_http_task(url, Some(&file_stem.trim().to_owned())).await?;
                 
                 let cache_sizes= get_cache_sizes(file_name, threads, config).unwrap();
-                
-                for (i, chunk) in http_task.chunks.iter().enumerate() {
-                    
-                    chunk.downloaded.fetch_add(cache_sizes[i], Ordering::SeqCst);
-                    
-                }
 
                 http_task.calculate_x_offsets(&cache_sizes);
                 
@@ -198,7 +193,7 @@ async fn resume_download(args: ArgMatches, mut config: Config) -> Result<(), Raw
 
             else {
 
-                println!("The file has already downloaded");
+                println!("The file is already downloaded");
 
                 return Ok(());
 

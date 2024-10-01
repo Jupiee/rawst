@@ -113,14 +113,17 @@ impl Engine {
 
             println!("Warning!: Server doesn't allow partial content, sequentially downloading..");
             self.config.threads= 1
-    
+        
+        // This here is for building only single chunk for single thread downloads
+        // if the server allows for partial content. Useful for resuming downloads
+        // with one thread.
+        } else if self.config.threads == 1 && task.allows_partial_content() {
+
+            task.create_single_chunk();
+
         }
 
-        //if self.config.threads > 1 {
-
         task.calculate_chunks(self.config.threads as u64);
-
-        //}
 
         return Ok(task)
 
