@@ -70,10 +70,21 @@ async fn url_download(args: ArgMatches, mut config: Config) -> Result<(), RawstE
 
     let threads= args.get_one::<usize>("Threads");
 
-    // overrides the default count in config
-    if threads.is_some() {
+    // 8 threads are maximum
+    // more than 8 threads could cause rate limiting
+    let threads_limit= 1..9;
 
-        config.threads= threads.unwrap().to_owned()
+    // if thread argument has a value and is in valid range then
+    // override the default count in config
+    if threads.is_some_and(|threads| threads_limit.contains(threads)) {
+
+        config.threads= threads.unwrap().to_owned();
+
+    }
+
+    else if threads.is_some_and(|threads| !threads_limit.contains(threads)) {
+
+        return Err(RawstErr::InvalidThreadCount)
 
     }
 

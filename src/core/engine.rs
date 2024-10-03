@@ -77,14 +77,6 @@ impl Engine {
 
     pub async fn create_http_task(&mut self, url: String, save_as: Option<&String>) -> Result<HttpTask, RawstErr> {
 
-        // 8 threads are maximum
-        // more than 8 threads could cause rate limiting
-        if !(1..9).contains(&self.config.threads) {
-
-            return Err(RawstErr::InvalidThreadCount)
-
-        }
-
         let cached_headers= self.http_handler.cache_headers(&url).await?;
 
         let mut filename= match extract_filename_from_header(&cached_headers) {
