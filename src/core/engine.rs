@@ -2,16 +2,14 @@ use crate::core::config::Config;
 use crate::core::task::HttpTask;
 use crate::core::http_handler::HttpHandler;
 use crate::core::errors::RawstErr;
-use crate::core::utils::{extract_filename_from_header, extract_filename_from_url, cache_headers};
+use crate::core::utils::{extract_filename_from_header, extract_filename_from_url};
 
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use futures::stream::{self, StreamExt};
-use reqwest::Client;
 
 pub struct Engine {
 
     config: Config,
-    client: Client,
     http_handler: HttpHandler,
     multi_bar: MultiProgress
 
@@ -21,14 +19,11 @@ impl Engine {
 
     pub fn new(config: Config) -> Self {
 
-        let client= Client::new();
-        let http_handler= HttpHandler::new(client.clone());
 
         Engine {
 
             config,
-            client,
-            http_handler,
+            http_handler: HttpHandler::new(),
             multi_bar: MultiProgress::new()
 
         }
@@ -90,7 +85,7 @@ impl Engine {
 
         }
 
-        let cached_headers= cache_headers(&self.client, &url).await?;
+        let cached_headers= self.http_handler.cache_headers(&url).await?;
 
         let mut filename= match extract_filename_from_header(&cached_headers) {
 

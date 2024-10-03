@@ -1,9 +1,7 @@
-use crate::core::errors::RawstErr;
-
 use std::fmt;
 use std::path::Path;
 
-use reqwest::{header::HeaderMap, Client, Url, StatusCode};
+use reqwest::{header::HeaderMap, Url};
 
 #[derive(Debug, Clone)]
 pub struct FileName {
@@ -21,30 +19,6 @@ impl fmt::Display for FileName {
 
     }
 
-}
-
-pub async fn cache_headers(client: &Client, url: &String) -> Result<HeaderMap, RawstErr> {
-
-    let response= client
-        .head(url)
-        .send()
-        .await
-        .map_err(|_| RawstErr::Unreachable)?;
-
-    match response.status() {
-
-        StatusCode::OK => return Ok(response.headers().to_owned()),
-
-        StatusCode::BAD_REQUEST => Err(RawstErr::BadRequest),
-        StatusCode::UNAUTHORIZED => Err(RawstErr::Unauthorized),
-        StatusCode::FORBIDDEN => Err(RawstErr::Forbidden),
-        StatusCode::NOT_FOUND => Err(RawstErr::NotFound),
-        StatusCode::INTERNAL_SERVER_ERROR => Err(RawstErr::InternalServerError),
-
-        _ => Err(RawstErr::Unknown(response.error_for_status().err().unwrap()))
-
-    }
-    
 }
 
 pub fn extract_filename_from_url(url: &String) -> FileName {

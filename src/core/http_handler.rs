@@ -3,7 +3,7 @@ use crate::core::task::{HttpTask, ChunkType};
 use crate::core::errors::RawstErr;
 use crate::core::config::Config;
 
-use reqwest::{Client, header::RANGE};
+use reqwest::{Client, StatusCode, header::RANGE, header::HeaderMap};
 use futures::stream::{self, StreamExt};
 use indicatif::ProgressBar;
 
@@ -16,11 +16,11 @@ pub struct HttpHandler {
 
 impl HttpHandler {
 
-    pub fn new(client: Client) -> Self {
+    pub fn new() -> Self {
 
         HttpHandler {
 
-            client
+            client: Client::new()
 
         }
         
@@ -102,6 +102,30 @@ impl HttpHandler {
 
         Ok(())
 
+    }
+
+    pub async fn cache_headers(&self, url: &String) -> Result<HeaderMap, RawstErr> {
+
+        let response= self.client
+            .head(url)
+            .send()
+            .await
+            .map_err(|_| RawstErr::Unreachable)?;
+    
+        match response.status() {
+    
+            StatusCode::OK => return Ok(response.headers().to_owned()),
+    
+            StatusCode::BAD_REQUEST => Err(RawstErr::BadRequest),
+            StatusCode::UNAUTHORIZED => Err(RawstErr::Unauthorized),
+            StatusCode::FORBIDDEN => Err(RawstErr::Forbidden),
+            StatusCode::NOT_FOUND => Err(RawstErr::NotFound),
+            StatusCode::INTERNAL_SERVER_ERROR => Err(RawstErr::InternalServerError),
+    
+            _ => Err(RawstErr::Unknown(response.error_for_status().err().unwrap()))
+    
+        }
+        
     }
 
 }
