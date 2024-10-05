@@ -16,6 +16,7 @@ Snag your files efficiently with Rawst downloader, written in rust for blazingly
 - Sequential streamed downloads
 - Concurrent downloads with multiple segments
 - Multiple file downloads from a text file
+- Resumable downloads support
 - Recordable history
 - Configurable config file
 - Detailed progress bars
@@ -53,6 +54,7 @@ Usage: rawst [OPTIONS]
 
 Options:
   -u, --url <Url>              Url to download
+      --resume <Resume>        Resume download of the given record ID
   -f, --file <InputFile>       Filepath to the file with links
       --history                Display download history
   -s, --save-as <Saveas>       Save file as custom name
@@ -62,8 +64,8 @@ Options:
 ```
 
 ### **Screenshots**
-![single_download.png](assets/single_download.PNG)
-![multi_donwload.png](assets/multi_download.PNG)
+<a href="https://ibb.co/x5K9fjz"><img src="https://i.ibb.co/nkqdncQ/Capture.png" alt="Capture" border="0"></a>
+<a href="https://ibb.co/JHmQz5T"><img src="https://i.ibb.co/2dWNjgr/Capture2.png" alt="Capture2" border="0"></a>
 
 ### 🎯 **Planned features**
 * [ ] Torrent support
@@ -71,7 +73,7 @@ Options:
 * [ ] Scheduled downloads
 * [ ] Priority downloads
 * [ ] Custom headers support
-* [ ] Resumable downloads
+* [x] Resumable downloads
 * [ ] Parallel downloads using cores
 * [x] Download history
 * [ ] Checksum with sha256
