@@ -171,7 +171,7 @@ impl HistoryManager {
 
         for record in result.iter() {
 
-            println!("Record\nid={:?}\nurl={:?}\nfile name={:?}\nfile size={:?}\ntotal downloaded={:?}\nfile location={:?}\nthreads used={:?}\ntimestamp={:?}\nstatus{:?}\n",
+            println!("Record\nid= {:?}\nurl= {:?}\nfile name= {:?}\nfile size= {:?}\ntotal downloaded= {:?}\nfile location= {:?}\nthreads used= {:?}\ntimestamp= {:?}\nstatus= {:?}\n",
             record.id, record.url, record.file_name, record.file_size, record.total_downloaded, record.file_location, record.threads_used, record.timestamp, record.status);
 
         }
