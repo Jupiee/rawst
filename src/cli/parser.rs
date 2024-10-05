@@ -30,7 +30,7 @@ fn build_command() -> ArgMatches {
             Arg::new("Resume")
             .long("resume")
             .value_parser(value_parser!(String))
-            .help("get record")
+            .help("Resume download of the given record ID")
         )
         .arg(
             Arg::new("InputFile")
