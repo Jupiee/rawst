@@ -1,6 +1,6 @@
 [package]
 name = "rawst"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Faseeh Shahzad"]
 description = "Snag your files efficiently with Rawst downloader"
 repository = "https://github.com/Jupiee/rawst"
@@ -19,7 +19,7 @@ base64 = "0.22.1"
 chrono = "0.4.38"
 clap = {version = "4.5.19", features = ["cargo"]}
 directories = "5.0.1"
-futures = "0.3.30"
+futures = "0.3.31"
 indicatif = "0.17.8"
 reqwest = {version= "0.12.8", features = ["stream"]}
 serde = {version= "1.0.210", features = ["derive"]}
