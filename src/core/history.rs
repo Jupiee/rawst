@@ -1,5 +1,5 @@
 use crate::core::errors::RawstErr;
-use crate::core::task::{HttpTask, Getter};
+use crate::core::task::HttpTask;
 use crate::core::config::Config;
 
 use std::path::Path;
@@ -24,7 +24,6 @@ struct Record {
     pub url: String,
     pub file_name: String,
     pub file_size: u64,
-    pub total_downloaded: u64,
     pub file_location: String,
     pub threads_used: usize,
     pub timestamp: String,
@@ -34,7 +33,7 @@ struct Record {
 
 impl Record {
 
-    pub fn new(id: String, url: String, file_name: String, file_size: u64, total_downloaded: u64, file_location: String, threads_used: usize) -> Record {
+    pub fn new(id: String, url: String, file_name: String, file_size: u64,  file_location: String, threads_used: usize) -> Record {
 
         let current_time= Local::now();
 
@@ -44,7 +43,6 @@ impl Record {
             url,
             file_name,
             file_size,
-            total_downloaded,
             file_location,
             threads_used,
             timestamp: current_time.to_string(),
@@ -89,7 +87,6 @@ impl HistoryManager {
             task.url.clone(),
             task.filename.to_string(),
             task.content_length(),
-            task.get_bytes_downloaded(),
             config.download_path.clone(),
             config.threads
         );
@@ -171,8 +168,8 @@ impl HistoryManager {
 
         for record in result.iter() {
 
-            println!("Record\nid= {:?}\nurl= {:?}\nfile name= {:?}\nfile size= {:?}\ntotal downloaded= {:?}\nfile location= {:?}\nthreads used= {:?}\ntimestamp= {:?}\nstatus= {:?}\n",
-            record.id, record.url, record.file_name, record.file_size, record.total_downloaded, record.file_location, record.threads_used, record.timestamp, record.status);
+            println!("Record\nid= {:?}\nurl= {:?}\nfile name= {:?}\nfile size= {:?}\nfile location= {:?}\nthreads used= {:?}\ntimestamp= {:?}\nstatus= {:?}\n",
+            record.id, record.url, record.file_name, record.file_size, record.file_location, record.threads_used, record.timestamp, record.status);
 
         }
 
