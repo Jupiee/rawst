@@ -4,13 +4,6 @@ use std::sync::{atomic::{AtomicU64, Ordering}, Arc};
 
 use reqwest::header::HeaderMap;
 
-// Abstract trait for getting download bytes
-pub trait Getter {
-
-    fn get_bytes_downloaded(&self) -> u64;
-
-}
-
 #[derive(Clone, Debug)]
 pub struct Chunk {
 
@@ -53,16 +46,6 @@ impl Chunk {
 
 }
 
-impl Getter for Chunk {
-
-    fn get_bytes_downloaded(&self) -> u64 {
-        
-        return self.downloaded.load(Ordering::SeqCst)
-
-    }
-
-}
-
 #[derive(Clone, Debug)]
 pub enum ChunkType {
 
@@ -83,16 +66,6 @@ pub struct HttpTask {
     // Cached headermap from Head request
     // Efficient for header values retrieval
     headers: HeaderMap
-
-}
-
-impl Getter for HttpTask {
-
-    fn get_bytes_downloaded(&self) -> u64 {
-        
-        return self.total_downloaded.load(Ordering::SeqCst)
-
-    }
 
 }
 
