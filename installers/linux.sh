@@ -1,6 +1,6 @@
 #!/bin/bash
 
-URL="https://github.com/Jupiee/rawst/releases/download/0.3/rawst"
+URL="https://github.com/Jupiee/rawst/releases/download/0.4.0/rawst-x86_64-unknown-linux-gnu.tar.gz"
 
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
 
@@ -11,8 +11,10 @@ else
     exit 1
 fi
 
-curl -L "$URL" -o "rawst"
+curl -L "$URL" -o "rawst-x86_64-unknown-linux-gnu.tar.gz"
 
-chmod +x "rawst"
+chmod +x "rawst-x86_64-unknown-linux-gnu.tar.gz"
 
-mv "rawst" "$DESTINATION"
+tar -xzvf "rawst-x86_64-unknown-linux-gnu.tar.gz" -C "/usr/local/bin"
+
+echo "Installation completed successfully."
