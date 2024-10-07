@@ -38,8 +38,6 @@ impl Engine {
         .unwrap()
         .progress_chars("=>_"));
 
-        println!("downloading with {:?} thread(s)", self.config.threads);
-    
         match self.config.threads {
 
             1 => self.http_handler.sequential_download(&task, &progressbar, &self.config).await?,
