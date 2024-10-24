@@ -21,8 +21,8 @@ fn build_command() -> ArgMatches {
         .about(crate_description!())
         .arg(
             Arg::new("Url")
-            .short('u')
-            .long("url")
+            .short('d')
+            .long("download")
             .value_parser(value_parser!(String))
             .help("Url to download")
         )
