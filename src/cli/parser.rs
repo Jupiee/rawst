@@ -180,7 +180,7 @@ async fn resume_download(args: ArgMatches, mut config: Config) -> Result<(), Raw
         Some(data) => {
 
             // notice: I can also get total file size by getting content length through http_task object
-            let (url, threads, file_name, _total_file_size, status)= data;
+            let (url, threads, file_name, status)= data;
 
             if status == "Pending" {
 

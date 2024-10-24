@@ -177,7 +177,7 @@ impl HistoryManager {
 
     }
 
-    pub fn get_record(&self, id: &String) -> Result<Option<(String, usize, String, u64, String)>, RawstErr> {
+    pub fn get_record(&self, id: &String) -> Result<Option<(String, usize, String, String)>, RawstErr> {
 
         let file_path= Path::new(&self.history_file_path)
             .join("rawst")
@@ -194,10 +194,9 @@ impl HistoryManager {
                 let url= record.url.clone();
                 let threads= record.threads_used;
                 let filename= record.file_name.clone();
-                let file_size= record.file_size;
                 let status= record.status.clone();
 
-                return Ok(Some((url, threads, filename, file_size, status)))
+                return Ok(Some((url, threads, filename, status)))
 
             }
 
