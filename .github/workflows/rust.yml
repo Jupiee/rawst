@@ -2,7 +2,7 @@ name: Build and Upload Binaries
 
 on:
   release:
-    types: [created]
+    types: [unpublished]
 
 jobs:
   build-and-upload:
