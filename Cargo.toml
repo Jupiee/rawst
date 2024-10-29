@@ -21,7 +21,7 @@ clap = {version = "4.5.20", features = ["cargo"]}
 directories = "5.0.1"
 futures = "0.3.31"
 indicatif = "0.17.8"
-reqwest = {version= "0.12.9", features = ["stream", "rustls-tls"]}
+reqwest = {version= "0.12.9", default-features = false, features = ["http2", "charset", "stream", "rustls-tls"]}
 serde = {version= "1.0.214", features = ["derive"]}
 serde_json = "1.0.132"
 tokio = {version= "1.41.0", features = ["full"]}
