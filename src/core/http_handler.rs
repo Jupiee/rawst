@@ -3,7 +3,7 @@ use crate::core::task::{HttpTask, ChunkType};
 use crate::core::errors::RawstErr;
 use crate::core::config::Config;
 
-use reqwest::{Client, StatusCode, header::RANGE, header::HeaderMap};
+use reqwest::{Client, StatusCode, header::{RANGE, HeaderMap, HeaderValue}};
 use futures::stream::{self, StreamExt};
 use indicatif::ProgressBar;
 
@@ -28,34 +28,25 @@ impl HttpHandler {
 
     pub async fn sequential_download(&self, task: &HttpTask, progressbar: &ProgressBar, config: &Config) -> Result<(), RawstErr> {
 
+        let mut headers= HeaderMap::new();
+
         if let ChunkType::Single(chunk) = &task.chunk_data {
 
-            let response= self.client.get(&task.url)
-                .header(RANGE, format!("bytes={}-{}", chunk.x_offset, chunk.y_offset))
-                .send()
-                .await
-                .map_err(|e| RawstErr::HttpError(e))?;
+            let range_value= format!("bytes={}-{}", chunk.x_offset, chunk.y_offset);
 
-                if response.status().is_success() {
-
-                    create_file(task, response, progressbar, &config.download_path).await?;
-        
-                }
+            headers.insert(RANGE, HeaderValue::from_str(range_value.as_str()).unwrap());
 
         }
 
-        else {
-
-            let response= self.client.get(&task.url)
+        let response= self.client.get(&task.url)
+            .headers(headers)
             .send()
             .await
             .map_err(|e| RawstErr::HttpError(e))?;
 
-            if response.status().is_success() {
+        if response.status().is_success() {
 
-                create_file(task, response, progressbar, &config.download_path).await?;
-    
-            }
+            create_file(task, response, progressbar, &config.download_path).await?;
 
         }
 
