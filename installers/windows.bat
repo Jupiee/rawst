@@ -1,6 +1,6 @@
 @echo off
 
-set URL=https://github.com/Jupiee/rawst/releases/download/0.4.0/rawst-x86_64-pc-windows-msvc.zip
+set URL=https://github.com/Jupiee/rawst/releases/latest/download/rawst-x86_64-pc-windows-msvc.zip
 set DESTINATION=C:\Users\%USERNAME%\AppData\Local\Microsoft\WindowsApps
 
 curl -L "%URL%" -o "rawst-x86_64-pc-windows-msvc.zip"
