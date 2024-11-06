@@ -5,7 +5,6 @@ use reqwest::Error as ReqwestError;
 
 #[derive(Debug)]
 pub enum RawstErr {
-
     HttpError(ReqwestError),
     FileError(io::Error),
     Unknown(ReqwestError),
@@ -16,14 +15,11 @@ pub enum RawstErr {
     Forbidden,
     NotFound,
     InternalServerError,
-    Unreachable
-
+    Unreachable,
 }
 
 impl fmt::Display for RawstErr {
-
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-
         match self {
 
             RawstErr::HttpError(err) => write!(f, "HTTP Error: {}", err),
@@ -39,9 +35,7 @@ impl fmt::Display for RawstErr {
             RawstErr::Unknown(err) => write!(f, "Unknow Error: {}", err)
 
         }
-
     }
-
 }
 
 impl std::error::Error for RawstErr {}
