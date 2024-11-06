@@ -21,7 +21,6 @@ pub enum RawstErr {
 impl fmt::Display for RawstErr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-
             RawstErr::HttpError(err) => write!(f, "HTTP Error: {}", err),
             RawstErr::FileError(err) => write!(f, "File Error: {}", err),
             RawstErr::InvalidThreadCount => write!(f, "Invalid number of threads"),
@@ -33,7 +32,6 @@ impl fmt::Display for RawstErr {
             RawstErr::InternalServerError => write!(f, "Internal Server Error: The server encountered an unexpected condition which prevented it from fulfilling the request."),
             RawstErr::Unreachable => write!(f, "Unreachable: The request was not able to reach the server"),
             RawstErr::Unknown(err) => write!(f, "Unknow Error: {}", err)
-
         }
     }
 }
