@@ -23,14 +23,12 @@ impl Default for Config {
 
         let local_dir = base_dirs.data_local_dir();
 
-        let cache_path = local_dir.join("rawst").join("cache").display().to_string();
-
-        return Config {
+        Config {
             download_path: user_dirs.download_dir().unwrap().display().to_string(),
-            cache_path,
+            cache_path: local_dir.join("rawst").join("cache").display().to_string(),
             config_path: local_dir.display().to_string(),
             threads: 1,
-        };
+        }
     }
 }
 
@@ -53,19 +51,19 @@ impl Config {
 
         let mut config_file = File::create(config_file_path)
             .await
-            .map_err(|e| RawstErr::FileError(e))?;
+            .map_err(RawstErr::FileError)?;
         let mut history_file = File::create(history_file_path)
             .await
-            .map_err(|e| RawstErr::FileError(e))?;
+            .map_err(RawstErr::FileError)?;
 
         config_file
-            .write_all(&content.as_bytes())
+            .write_all(content.as_bytes())
             .await
-            .map_err(|e| RawstErr::FileError(e))?;
+            .map_err(RawstErr::FileError)?;
         history_file
             .write_all("[\n\n]".as_bytes())
             .await
-            .map_err(|e| RawstErr::FileError(e))?;
+            .map_err(RawstErr::FileError)?;
 
         Ok(default)
     }
@@ -79,13 +77,11 @@ impl Config {
 
         let mut file_content = String::new();
 
-        let mut file = File::open(config_dir)
-            .await
-            .map_err(|e| RawstErr::FileError(e))?;
+        let mut file = File::open(config_dir).await.map_err(RawstErr::FileError)?;
 
         file.read_to_string(&mut file_content)
             .await
-            .map_err(|e| RawstErr::FileError(e))?;
+            .map_err(RawstErr::FileError)?;
 
         let config: Config = toml::from_str(&file_content).unwrap();
 

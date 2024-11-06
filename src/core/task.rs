@@ -17,19 +17,15 @@ pub struct Chunk {
 
 impl Chunk {
     pub fn new(x_offset: u64, y_offset: u64) -> Self {
-        return Chunk {
+        Chunk {
             x_offset,
             y_offset,
             downloaded: Arc::new(AtomicU64::new(0)),
-        };
+        }
     }
 
     pub fn is_downloaded(&self) -> bool {
-        if self.downloaded.load(Ordering::SeqCst) == self.y_offset + 1 {
-            return true;
-        } else {
-            false
-        }
+        self.downloaded.load(Ordering::SeqCst) == self.y_offset + 1
     }
 }
 
@@ -65,13 +61,13 @@ impl HttpTask {
             ChunkType::Multiple(Vec::with_capacity(number_of_chunks))
         };
 
-        return HttpTask {
+        HttpTask {
             url,
             filename,
             headers: cached_headers,
             total_downloaded: Arc::new(AtomicU64::new(0)),
             chunk_data,
-        };
+        }
     }
 
     pub fn calculate_chunks(&mut self, number_of_chunks: u64) {
@@ -85,7 +81,7 @@ impl HttpTask {
             ChunkType::Multiple(chunks) => {
                 let chunk_size = total_size / number_of_chunks;
 
-                (0..number_of_chunks).into_iter().for_each(|i| match i {
+                (0..number_of_chunks).for_each(|i| match i {
                     0 => {
                         chunks.push(Chunk::new(0, chunk_size));
                     }
@@ -103,7 +99,7 @@ impl HttpTask {
                     }
                 });
             }
-            ChunkType::None => return,
+            ChunkType::None => (),
         }
     }
 
@@ -111,7 +107,7 @@ impl HttpTask {
         self.chunk_data = ChunkType::Single(Chunk::new(0, 0));
     }
 
-    pub fn calculate_x_offsets(&mut self, offsets: &Vec<u64>) {
+    pub fn calculate_x_offsets(&mut self, offsets: &[u64]) {
         match &mut self.chunk_data {
             ChunkType::Single(chunk) => {
                 chunk.x_offset += offsets[0];
@@ -130,33 +126,25 @@ impl HttpTask {
                     }
                 }
             }
-            ChunkType::None => return,
+            ChunkType::None => (),
         }
     }
 
     pub fn content_length(&self) -> u64 {
         match self.headers.get("content-length") {
-            Some(length) => {
-                return length
-                    .to_str()
-                    .unwrap()
-                    .parse()
-                    .expect("Invalid size format")
-            }
-            None => return 0,
-        };
+            Some(length) => length
+                .to_str()
+                .unwrap()
+                .parse()
+                .expect("Invalid size format"),
+            None => 0,
+        }
     }
 
     pub fn allows_partial_content(&self) -> bool {
         match self.headers.get("accept-ranges") {
-            Some(value) => {
-                if value != "none" {
-                    return true;
-                }
-
-                return false;
-            }
-            None => return false,
+            Some(value) => value != "none",
+            None => false,
         }
     }
 }

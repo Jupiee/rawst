@@ -10,14 +10,14 @@ use reqwest::{
     Client, StatusCode,
 };
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct HttpHandler {
     pub client: Client,
 }
 
 impl HttpHandler {
     pub fn new() -> Self {
-        HttpHandler {
+        Self {
             client: Client::new(),
         }
     }
@@ -42,7 +42,7 @@ impl HttpHandler {
             .headers(headers)
             .send()
             .await
-            .map_err(|e| RawstErr::HttpError(e))?;
+            .map_err(RawstErr::HttpError)?;
 
         if response.status().is_success() {
             create_file(task, response, progressbar, &config.download_path).await?;
@@ -73,7 +73,7 @@ impl HttpHandler {
                         )
                         .send()
                         .await
-                        .map_err(|e| RawstErr::HttpError(e))?;
+                        .map_err(RawstErr::HttpError)?;
 
                     if response.status().is_success() {
                         create_cache(i, task, response, progressbar, &config.cache_path).await?;
@@ -103,7 +103,7 @@ impl HttpHandler {
             .map_err(|_| RawstErr::Unreachable)?;
 
         match response.status() {
-            StatusCode::OK => return Ok(response.headers().to_owned()),
+            StatusCode::OK => Ok(response.headers().to_owned()),
 
             StatusCode::BAD_REQUEST => Err(RawstErr::BadRequest),
             StatusCode::UNAUTHORIZED => Err(RawstErr::Unauthorized),

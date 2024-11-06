@@ -84,7 +84,7 @@ impl HistoryManager {
 
         let new_json_str = serde_json::to_string_pretty(&records).unwrap();
 
-        fs::write(file_path, new_json_str).map_err(|e| RawstErr::FileError(e))?;
+        fs::write(file_path, new_json_str).map_err(RawstErr::FileError)?;
 
         Ok(())
     }
@@ -107,7 +107,7 @@ impl HistoryManager {
 
         let new_json_str = serde_json::to_string_pretty(&records).unwrap();
 
-        fs::write(file_path, new_json_str).map_err(|e| RawstErr::FileError(e))?;
+        fs::write(file_path, new_json_str).map_err(RawstErr::FileError)?;
 
         Ok(())
     }
@@ -127,9 +127,8 @@ impl HistoryManager {
             Value::Array(arr) => {
                 for item in arr.iter() {
                     let record = serde_json::from_value::<Record>(item.clone());
-
-                    if record.is_ok() {
-                        result.push(record.unwrap());
+                    if let Ok(r) = record {
+                        result.push(r);
                     }
                 }
             }

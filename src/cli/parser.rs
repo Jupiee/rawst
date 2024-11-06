@@ -197,7 +197,7 @@ async fn resume_download(args: ArgMatches, mut config: Config) -> Result<(), Raw
 
     history_manager.update_record(id)?;
 
-    return Ok(());
+    Ok(())
 }
 
 pub async fn init() -> Result<(), RawstErr> {
@@ -210,20 +210,20 @@ pub async fn init() -> Result<(), RawstErr> {
     if args.contains_id("Url") {
         url_download(args, config).await?;
 
-        return Ok(());
+        Ok(())
     } else if args.contains_id("InputFile") {
         list_download(args, config).await?;
 
-        return Ok(());
+        Ok(())
     } else if args.contains_id("Resume") {
         resume_download(args, config).await?;
 
-        return Ok(());
+        Ok(())
     } else if args.contains_id("History") {
         display_history(config).await?;
 
-        return Ok(());
+        Ok(())
     } else {
-        return Err(RawstErr::InvalidArgs);
+        Err(RawstErr::InvalidArgs)
     }
 }
