@@ -22,3 +22,6 @@ TODOs.org
 !.helix/
 # VSCode
 /.vscode
+
+# Github
+!.github/
