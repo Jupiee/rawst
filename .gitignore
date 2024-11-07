@@ -1,2 +1,24 @@
+.*
+
+# Ignores
+!.ignore
+
+# Git
+!.gitignore
+
+# Rust
+## Cargo
+!.cargo/
 /target
+## Rust fmt
+!.rustfmt.toml
+
+# Org
+TODOs.org
+
+# Emacs
+!.dir-locals.el
+# Helix
+!.helix/
+# VSCode
 /.vscode
