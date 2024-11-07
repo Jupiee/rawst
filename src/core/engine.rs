@@ -101,6 +101,6 @@ impl Engine {
 
         task.calculate_chunks(self.config.threads as u64);
 
-        return Ok(task);
+        Ok(task)
     }
 }
