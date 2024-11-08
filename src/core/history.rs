@@ -153,38 +153,29 @@ impl HistoryManager {
 
         let json_str = fs::read_to_string(&file_path).unwrap();
 
-        let records: Vec<Record> =
-            serde_json::from_str(&json_str).expect("There are no downloads");
+        let records: Vec<Record> = serde_json::from_str(&json_str).expect("There are no downloads");
 
         for record in records.iter().rev() {
-
             if record.status == "Pending" {
-                return Ok(Some(record.to_owned()))
-
+                return Ok(Some(record.to_owned()));
             }
         }
 
         Ok(None)
-
     }
 
-    pub fn get_record(
-        &self,
-        id: &String,
-    ) -> Result<Option<Record>, RawstErr> {
+    pub fn get_record(&self, id: &String) -> Result<Option<Record>, RawstErr> {
         let file_path = Path::new(&self.history_file_path)
             .join("rawst")
             .join("history.json");
 
         let json_str = fs::read_to_string(&file_path).unwrap();
 
-        let records: Vec<Record> =
-            serde_json::from_str(&json_str).expect("There are no downloads");
+        let records: Vec<Record> = serde_json::from_str(&json_str).expect("There are no downloads");
 
         for record in records {
             if record.id == *id {
-                return Ok(Some(record))
-
+                return Ok(Some(record));
             }
         }
 
