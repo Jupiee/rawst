@@ -6,6 +6,9 @@
 # Git
 !.gitignore
 
+# Nix - devenv (https://devenv.sh)
+!.envrc
+
 # Rust
 ## Cargo
 !.cargo/
