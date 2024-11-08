@@ -29,7 +29,9 @@ fn build_command() -> ArgMatches {
             Arg::new("Resume")
                 .long("resume")
                 .value_parser(value_parser!(String))
-                .help("Resume download of the given record ID"),
+                .num_args(0..=1)
+                .default_missing_value("auto")
+                .help("Resume download of the given record ID, if no ID is given the recent pending download will resume"),
         )
         .arg(
             Arg::new("InputFile")
@@ -155,25 +157,31 @@ async fn resume_download(args: ArgMatches, mut config: Config) -> Result<(), Raw
 
     let history_manager = HistoryManager::new(config.config_path.clone());
 
-    let record = history_manager.get_record(&id)?;
+    let record = if id == "auto" {
+
+        history_manager.get_recent_pending()?
+
+    } else {
+
+        history_manager.get_record(&id)?
+
+    };
 
     match record {
         Some(data) => {
             // notice: I can also get total file size by getting content length through http_task object
-            let (url, threads, file_name, status) = data;
+            if data.status == "Pending" {
+                config.threads = data.threads_used;
 
-            if status == "Pending" {
-                config.threads = threads;
-
-                let (file_stem, _) = file_name.rsplit_once(".").unwrap();
+                let (file_stem, _) = data.file_name.rsplit_once(".").unwrap();
 
                 let mut engine = Engine::new(config.clone());
 
                 let mut http_task = engine
-                    .create_http_task(url, Some(&file_stem.trim().to_owned()))
+                    .create_http_task(data.url, Some(&file_stem.trim().to_owned()))
                     .await?;
 
-                let cache_sizes = get_cache_sizes(file_name, threads, config).unwrap();
+                let cache_sizes = get_cache_sizes(data.file_name, data.threads_used, config).unwrap();
 
                 http_task.calculate_x_offsets(&cache_sizes);
 
@@ -181,7 +189,10 @@ async fn resume_download(args: ArgMatches, mut config: Config) -> Result<(), Raw
                     .total_downloaded
                     .fetch_add(cache_sizes.iter().sum::<u64>(), Ordering::SeqCst);
 
-                engine.http_download(http_task).await?
+                engine.http_download(http_task).await?;
+
+                history_manager.update_record(data.id)?
+
             } else {
                 println!("The file is already downloaded");
 
@@ -194,8 +205,6 @@ async fn resume_download(args: ArgMatches, mut config: Config) -> Result<(), Raw
             return Ok(());
         }
     }
-
-    history_manager.update_record(id)?;
 
     Ok(())
 }

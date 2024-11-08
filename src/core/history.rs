@@ -14,8 +14,8 @@ struct Downloads {
     record: Vec<Record>,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
-struct Record {
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct Record {
     pub id: String,
     pub url: String,
     pub file_name: String,
@@ -146,27 +146,45 @@ impl HistoryManager {
         Ok(())
     }
 
-    pub fn get_record(
-        &self,
-        id: &String,
-    ) -> Result<Option<(String, usize, String, String)>, RawstErr> {
+    pub fn get_recent_pending(&self) -> Result<Option<Record>, RawstErr> {
         let file_path = Path::new(&self.history_file_path)
             .join("rawst")
             .join("history.json");
 
         let json_str = fs::read_to_string(&file_path).unwrap();
 
-        let mut records: Vec<Record> =
+        let records: Vec<Record> =
             serde_json::from_str(&json_str).expect("There are no downloads");
 
-        for record in records.iter_mut() {
-            if record.id == *id {
-                let url = record.url.clone();
-                let threads = record.threads_used;
-                let filename = record.file_name.clone();
-                let status = record.status.clone();
+        for record in records.iter().rev() {
 
-                return Ok(Some((url, threads, filename, status)));
+            if record.status == "Pending" {
+                return Ok(Some(record.to_owned()))
+
+            }
+        }
+
+        Ok(None)
+
+    }
+
+    pub fn get_record(
+        &self,
+        id: &String,
+    ) -> Result<Option<Record>, RawstErr> {
+        let file_path = Path::new(&self.history_file_path)
+            .join("rawst")
+            .join("history.json");
+
+        let json_str = fs::read_to_string(&file_path).unwrap();
+
+        let records: Vec<Record> =
+            serde_json::from_str(&json_str).expect("There are no downloads");
+
+        for record in records {
+            if record.id == *id {
+                return Ok(Some(record))
+
             }
         }
 
