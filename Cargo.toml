@@ -13,7 +13,9 @@ include = ["src/**/*"]
 [dependencies]
 base64 = "0.22.1"
 chrono = "0.4.38"
-clap = {version = "4.5.20", features = ["cargo"]}
+clap = { version = "4.5.20", features = ["cargo", "derive"] }
+clap-num = "1.1.1"
+clap_complete = "4.5.37"
 directories = "5.0.1"
 futures = "0.3.31"
 indicatif = "0.17.8"

@@ -1,8 +1,11 @@
+use crate::cli::args::DownloadArgs;
+use crate::cli::args::HistoryArgs;
+use crate::cli::args::ResumeArgs;
 use crate::core::config::Config;
 use crate::core::engine::Engine;
 use crate::core::errors::RawstErr;
 use crate::core::history::HistoryManager;
-use crate::core::io::{config_exist, get_cache_sizes, read_links};
+use crate::core::io::{get_cache_sizes, read_links};
 use crate::core::task::HttpTask;
 
 use std::sync::atomic::Ordering;
@@ -10,80 +13,18 @@ use std::sync::atomic::Ordering;
 use base64::{prelude::BASE64_STANDARD, Engine as Base64Engine};
 use chrono::prelude::Local;
 
-use clap::{crate_authors, crate_description, crate_name, crate_version, value_parser};
-use clap::{Arg, ArgMatches, Command};
+// TODO: Fuse url_download and list_download
+// TODO: Support downloading many elements from each source
 
-fn build_command() -> ArgMatches {
-    Command::new(crate_name!())
-        .author(crate_authors!())
-        .version(crate_version!())
-        .about(crate_description!())
-        .arg(
-            Arg::new("Url")
-                .short('d')
-                .long("download")
-                .value_parser(value_parser!(String))
-                .help("Url to download"),
-        )
-        .arg(
-            Arg::new("Resume")
-                .long("resume")
-                .value_parser(value_parser!(String))
-                .num_args(0..=1)
-                .default_missing_value("auto")
-                .help("Resume download of the given record ID, if no ID is given the recent pending download will resume"),
-        )
-        .arg(
-            Arg::new("InputFile")
-                .short('f')
-                .long("file")
-                .value_parser(value_parser!(String))
-                .help("Filepath to the file with links"),
-        )
-        .arg(
-            Arg::new("History")
-                .long("history")
-                .action(clap::ArgAction::SetTrue)
-                .help("Display download history"),
-        )
-        .arg(
-            Arg::new("Saveas")
-                .short('s')
-                .long("save-as")
-                .help("Save file as custom name"),
-        )
-        .arg(
-            Arg::new("Threads")
-                .short('m')
-                .long("max-threads")
-                .value_parser(value_parser!(usize))
-                .help("Maximum number of concurrent downloads"),
-        )
-        .get_matches()
-}
-
-async fn url_download(args: ArgMatches, mut config: Config) -> Result<(), RawstErr> {
-    let url = args.get_one::<String>("Url").unwrap().to_string();
-
-    let save_as = args.get_one::<String>("Saveas");
-
-    let threads = args.get_one::<usize>("Threads");
-
-    // 8 threads are maximum
-    // more than 8 threads could cause rate limiting
-    let threads_limit = 1..9;
-
-    // if thread argument has a value and is in valid range then
+pub async fn url_download(args: DownloadArgs, mut config: Config) -> Result<(), RawstErr> {
+    let url = args.files.into_iter().next().ok_or(RawstErr::InvalidArgs)?;
+    let save_as = args.output_file_path.into_iter().next();
     // override the default count in config
-    if threads.is_some_and(|threads| threads_limit.contains(threads)) {
-        config.threads = threads.unwrap().to_owned();
-    } else if threads.is_some_and(|threads| !threads_limit.contains(threads)) {
-        return Err(RawstErr::InvalidThreadCount);
-    }
+    config.threads = args.threads.into();
 
     let mut engine = Engine::new(config.clone());
 
-    let http_task = engine.create_http_task(url, save_as).await?;
+    let http_task = engine.create_http_task(url, (&save_as).into()).await?;
 
     let history_manager = HistoryManager::new(config.config_path.clone());
 
@@ -100,23 +41,21 @@ async fn url_download(args: ArgMatches, mut config: Config) -> Result<(), RawstE
     Ok(())
 }
 
-async fn list_download(args: ArgMatches, mut config: Config) -> Result<(), RawstErr> {
+pub async fn list_download(args: DownloadArgs, mut config: Config) -> Result<(), RawstErr> {
     config.threads = 1;
 
     let mut engine = Engine::new(config.clone());
 
     let history_manager = HistoryManager::new(config.config_path.clone());
 
-    let file_path = args.get_one::<String>("InputFile").unwrap();
+    let file_path = args.input_file.ok_or(RawstErr::InvalidArgs)?;
 
-    let link_string = read_links(file_path).await?;
-
-    let url_list = link_string.split("\n").collect::<Vec<&str>>();
-
-    let mut http_tasks: Vec<HttpTask> = Vec::new();
+    let link_string = read_links(&file_path).await?;
 
     let mut task_ids: Vec<String> = Vec::new();
+    let mut http_tasks: Vec<HttpTask> = Vec::new();
 
+    let url_list = link_string.split("\n").collect::<Vec<&str>>();
     for (index, url) in url_list.iter().enumerate() {
         let url = url.trim().to_string();
 
@@ -144,7 +83,7 @@ async fn list_download(args: ArgMatches, mut config: Config) -> Result<(), Rawst
     Ok(())
 }
 
-async fn display_history(config: Config) -> Result<(), RawstErr> {
+pub async fn display_history(_args: HistoryArgs, config: Config) -> Result<(), RawstErr> {
     let history_manager = HistoryManager::new(config.config_path);
 
     history_manager.get_history()?;
@@ -152,19 +91,19 @@ async fn display_history(config: Config) -> Result<(), RawstErr> {
     Ok(())
 }
 
-async fn resume_download(args: ArgMatches, mut config: Config) -> Result<(), RawstErr> {
-    let id = args.get_one::<String>("Resume").unwrap().to_owned();
+pub async fn resume_download(args: ResumeArgs, mut config: Config) -> Result<(), RawstErr> {
+    let id = args
+        .download_ids
+        .into_iter()
+        .next()
+        .ok_or(RawstErr::InvalidArgs)?;
 
     let history_manager = HistoryManager::new(config.config_path.clone());
 
     let record = if id == "auto" {
-
         history_manager.get_recent_pending()?
-
     } else {
-
         history_manager.get_record(&id)?
-
     };
 
     match record {
@@ -181,7 +120,8 @@ async fn resume_download(args: ArgMatches, mut config: Config) -> Result<(), Raw
                     .create_http_task(data.url, Some(&file_stem.trim().to_owned()))
                     .await?;
 
-                let cache_sizes = get_cache_sizes(data.file_name, data.threads_used, config).unwrap();
+                let cache_sizes =
+                    get_cache_sizes(data.file_name, data.threads_used, config).unwrap();
 
                 http_task.calculate_x_offsets(&cache_sizes);
 
@@ -192,7 +132,6 @@ async fn resume_download(args: ArgMatches, mut config: Config) -> Result<(), Raw
                 engine.http_download(http_task).await?;
 
                 history_manager.update_record(data.id)?
-
             } else {
                 println!("The file is already downloaded");
 
@@ -207,32 +146,4 @@ async fn resume_download(args: ArgMatches, mut config: Config) -> Result<(), Raw
     }
 
     Ok(())
-}
-
-pub async fn init() -> Result<(), RawstErr> {
-    let args = build_command();
-    let config = match config_exist() {
-        true => Config::load().await?,
-        false => Config::build().await?,
-    };
-
-    if args.contains_id("Url") {
-        url_download(args, config).await?;
-
-        Ok(())
-    } else if args.contains_id("InputFile") {
-        list_download(args, config).await?;
-
-        Ok(())
-    } else if args.contains_id("Resume") {
-        resume_download(args, config).await?;
-
-        Ok(())
-    } else if args.contains_id("History") {
-        display_history(config).await?;
-
-        Ok(())
-    } else {
-        Err(RawstErr::InvalidArgs)
-    }
 }
