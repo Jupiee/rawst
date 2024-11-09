@@ -1,3 +1,4 @@
+use crate::cli::args::HistoryArgs;
 use crate::core::config::Config;
 use crate::core::errors::RawstErr;
 use crate::core::task::HttpTask;
@@ -8,6 +9,10 @@ use std::path::Path;
 use chrono::prelude::Local;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+
+pub async fn show_history(_args: HistoryArgs, config: Config) -> Result<(), RawstErr> {
+    HistoryManager::new(config.config_path).get_history()
+}
 
 #[derive(Deserialize, Serialize)]
 struct Downloads {

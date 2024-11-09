@@ -1,5 +1,4 @@
 use crate::cli::args::DownloadArgs;
-use crate::cli::args::HistoryArgs;
 use crate::cli::args::ResumeArgs;
 use crate::core::config::Config;
 use crate::core::engine::Engine;
@@ -13,8 +12,15 @@ use std::sync::atomic::Ordering;
 use base64::{prelude::BASE64_STANDARD, Engine as Base64Engine};
 use chrono::prelude::Local;
 
-// TODO: Fuse url_download and list_download
-// TODO: Support downloading many elements from each source
+pub async fn download(args: DownloadArgs, config: Config) -> Result<(), RawstErr> {
+    // TODO: Fuse url_download and list_download
+    // TODO: Support downloading many elements from each source
+    if args.input_file.is_some() {
+        list_download(args, config).await
+    } else {
+        url_download(args, config).await
+    }
+}
 
 pub async fn url_download(args: DownloadArgs, mut config: Config) -> Result<(), RawstErr> {
     let url = args.files.into_iter().next().ok_or(RawstErr::InvalidArgs)?;
@@ -79,14 +85,6 @@ pub async fn list_download(args: DownloadArgs, mut config: Config) -> Result<(),
     for id in task_ids.iter() {
         history_manager.update_record(id.clone())?;
     }
-
-    Ok(())
-}
-
-pub async fn display_history(_args: HistoryArgs, config: Config) -> Result<(), RawstErr> {
-    let history_manager = HistoryManager::new(config.config_path);
-
-    history_manager.get_history()?;
 
     Ok(())
 }

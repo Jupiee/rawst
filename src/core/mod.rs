@@ -1,4 +1,5 @@
 pub mod config;
+pub mod downloader;
 pub mod engine;
 pub mod errors;
 pub mod history;
