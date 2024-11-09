@@ -25,6 +25,8 @@ pub fn extract_filename_from_url(url: &str) -> FileName {
 
     let path = Path::new(filename.last().unwrap());
 
+    // FIXME: This crashes when there's no extension
+    //   RUST_BACKTRACE=1 cargo run -- http://aoeu.com
     FileName {
         stem: path.file_stem().unwrap().to_str().unwrap().to_string(),
         extension: path.extension().unwrap().to_str().unwrap().to_string(),
