@@ -9,6 +9,10 @@ jobs:
     name: "Build and Upload Binaries"
     strategy:
       matrix:
+        toolchain:
+          # - stable
+          # - beta
+          - nightly
         include:
           - target: x86_64-unknown-linux-gnu
             os: ubuntu-latest
