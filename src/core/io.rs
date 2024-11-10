@@ -1,10 +1,6 @@
-use crate::core::config::Config;
-use crate::core::errors::RawstErr;
-use crate::core::task::{ChunkType, HttpTask};
-use crate::core::utils::FileName;
-
 use std::fs;
 use std::path::Path;
+use std::path::PathBuf;
 use std::sync::atomic::Ordering;
 
 use directories::BaseDirs;
@@ -13,6 +9,11 @@ use indicatif::ProgressBar;
 use reqwest::Response;
 use tokio::fs::{remove_file, File};
 use tokio::io::{AsyncReadExt, AsyncWriteExt, BufReader, BufWriter};
+
+use crate::core::config::Config;
+use crate::core::errors::RawstErr;
+use crate::core::task::{ChunkType, HttpTask};
+use crate::core::utils::FileName;
 
 pub async fn merge_files(filename: &FileName, config: &Config) -> Result<(), RawstErr> {
     let output_path = Path::new(&config.download_path).join(filename.to_string());
@@ -196,7 +197,7 @@ pub fn config_exist() -> bool {
     config_file_path.exists() && history_file_path.exists()
 }
 
-pub async fn read_links(filepath: &String) -> Result<String, RawstErr> {
+pub async fn read_links(filepath: &PathBuf) -> Result<String, RawstErr> {
     let mut file = File::open(filepath).await.map_err(RawstErr::FileError)?;
 
     let mut file_content = String::new();

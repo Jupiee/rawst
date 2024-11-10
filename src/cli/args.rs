@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use iri_string::types::IriString;
 
 use clap::Args;
@@ -53,7 +55,7 @@ pub struct DownloadArgs {
     // Inputs
     /// File where to look for download IRIs
     #[arg(short, long, default_value=None)]
-    pub input_file: Option<String>,
+    pub input_file: Option<PathBuf>,
 
     /// The IRIs to download
     #[arg()]
