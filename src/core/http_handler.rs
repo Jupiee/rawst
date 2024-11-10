@@ -1,14 +1,15 @@
-use crate::core::config::Config;
-use crate::core::errors::RawstErr;
-use crate::core::io::{create_cache, create_file, merge_files};
-use crate::core::task::{ChunkType, HttpTask};
-
 use futures::stream::{self, StreamExt};
 use indicatif::ProgressBar;
+use iri_string::types::IriString;
 use reqwest::{
     header::{HeaderMap, HeaderValue, RANGE},
     Client, StatusCode,
 };
+
+use crate::core::config::Config;
+use crate::core::errors::RawstErr;
+use crate::core::io::{create_cache, create_file, merge_files};
+use crate::core::task::{ChunkType, HttpTask};
 
 #[derive(Clone, Default)]
 pub struct HttpHandler {
@@ -38,7 +39,7 @@ impl HttpHandler {
 
         let response = self
             .client
-            .get(&task.url)
+            .get(to_reqwest_url(&task.iri))
             .headers(headers)
             .send()
             .await
@@ -66,7 +67,7 @@ impl HttpHandler {
             async move {
                 if let ChunkType::Multiple(chunks) = &task.chunk_data {
                     let response = client
-                        .get(&task.url)
+                        .get(to_reqwest_url(&task.iri))
                         .header(
                             RANGE,
                             format!("bytes={}-{}", chunks[i].x_offset, chunks[i].y_offset),
@@ -94,10 +95,10 @@ impl HttpHandler {
         Ok(())
     }
 
-    pub async fn cache_headers(&self, url: &String) -> Result<HeaderMap, RawstErr> {
+    pub async fn cache_headers(&self, iri: &IriString) -> Result<HeaderMap, RawstErr> {
         let response = self
             .client
-            .head(url)
+            .head(to_reqwest_url(iri))
             .send()
             .await
             .map_err(|_| RawstErr::Unreachable)?;
@@ -116,4 +117,11 @@ impl HttpHandler {
             )),
         }
     }
+}
+
+/// Converts a IriString into reqwest::Url (url::Url)
+fn to_reqwest_url(iri: &IriString) -> reqwest::Url {
+    let uri: iri_string::types::UriString = iri.clone().encode_into_uri();
+
+    reqwest::Url::parse(uri.as_str()).unwrap()
 }

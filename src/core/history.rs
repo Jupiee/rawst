@@ -1,14 +1,15 @@
-use crate::cli::args::HistoryArgs;
-use crate::core::config::Config;
-use crate::core::errors::RawstErr;
-use crate::core::task::HttpTask;
-
 use std::fs;
 use std::path::Path;
 
 use chrono::prelude::Local;
+use iri_string::types::IriString;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+
+use crate::cli::args::HistoryArgs;
+use crate::core::config::Config;
+use crate::core::errors::RawstErr;
+use crate::core::task::HttpTask;
 
 pub async fn show_history(_args: HistoryArgs, config: Config) -> Result<(), RawstErr> {
     HistoryManager::new(config.config_path).get_history()
@@ -22,7 +23,7 @@ struct Downloads {
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Record {
     pub id: String,
-    pub url: String,
+    pub iri: IriString,
     pub file_name: String,
     pub file_size: u64,
     pub file_location: String,
@@ -34,7 +35,7 @@ pub struct Record {
 impl Record {
     pub fn new(
         id: String,
-        url: String,
+        iri: IriString,
         file_name: String,
         file_size: u64,
         file_location: String,
@@ -44,7 +45,7 @@ impl Record {
 
         Record {
             id,
-            url,
+            iri,
             file_name,
             file_size,
             file_location,
@@ -71,14 +72,24 @@ impl HistoryManager {
             .join("rawst")
             .join("history.json");
 
-        let json_str = fs::read_to_string(&file_path).unwrap();
+        let json_str = fs::read_to_string(&file_path).unwrap_or_else(|_| {
+            panic!(
+                "Couldn't read history database at '{}'.",
+                file_path.display()
+            )
+        });
 
-        let mut records: Vec<Record> =
-            serde_json::from_str(&json_str).expect("There are no downloads");
+        // NOTE: This breaks on changes to Record.
+        let mut records: Vec<Record> = serde_json::from_str(&json_str).unwrap_or_else(|_| {
+            panic!(
+                "Couldn't parse history database at '{}'.",
+                file_path.display()
+            )
+        });
 
         let new_record = Record::new(
             id,
-            task.url.clone(),
+            task.iri.clone(),
             task.filename.to_string(),
             task.content_length(),
             config.download_path.clone(),
@@ -144,8 +155,8 @@ impl HistoryManager {
         }
 
         for record in result.iter() {
-            println!("Record\nid= {:?}\nurl= {:?}\nfile name= {:?}\nfile size= {:?}\nfile location= {:?}\nthreads used= {:?}\ntimestamp= {:?}\nstatus= {:?}\n",
-            record.id, record.url, record.file_name, record.file_size, record.file_location, record.threads_used, record.timestamp, record.status);
+            println!("Record\nid= {:?}\niri= {:?}\nfile name= {:?}\nfile size= {:?}\nfile location= {:?}\nthreads used= {:?}\ntimestamp= {:?}\nstatus= {:?}\n",
+            record.id, record.iri, record.file_name, record.file_size, record.file_location, record.threads_used, record.timestamp, record.status);
         }
 
         Ok(())

@@ -1,7 +1,8 @@
 use std::fmt;
-use std::path::Path;
+use std::path::PathBuf;
 
-use reqwest::{header::HeaderMap, Url};
+use iri_string::types::IriString;
+use reqwest::header::HeaderMap;
 
 #[derive(Debug, Clone)]
 pub struct FileName {
@@ -15,15 +16,8 @@ impl fmt::Display for FileName {
     }
 }
 
-pub fn extract_filename_from_url(url: &str) -> FileName {
-    let parsed_url = Url::parse(url).expect("Invalid Url");
-
-    let filename = parsed_url
-        .path_segments()
-        .map(|c| c.collect::<Vec<_>>())
-        .unwrap();
-
-    let path = Path::new(filename.last().unwrap());
+pub fn extract_filename_from_url(iri: &IriString) -> FileName {
+    let path = PathBuf::from(iri.path_str());
 
     // FIXME: This crashes when there's no extension
     //   RUST_BACKTRACE=1 cargo run -- http://aoeu.com
@@ -42,9 +36,7 @@ pub fn extract_filename_from_header(headers: &HeaderMap) -> Option<FileName> {
 
             for part in parts {
                 if let Some(filename) = part.trim().strip_prefix("filename=") {
-                    let filename = filename.trim_matches('"');
-
-                    let path = Path::new(filename);
+                    let path = PathBuf::from(filename.trim_matches('"'));
 
                     let file_stem = path.file_stem().unwrap().to_str().unwrap().to_string();
 
