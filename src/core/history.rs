@@ -1,5 +1,4 @@
 use std::fs;
-use std::path::Path;
 use std::path::PathBuf;
 
 use chrono::prelude::Local;
@@ -13,7 +12,7 @@ use crate::core::errors::RawstErr;
 use crate::core::task::HttpTask;
 
 pub async fn show_history(_args: HistoryArgs, config: Config) -> Result<(), RawstErr> {
-    HistoryManager::new(config.config_path).get_history()
+    HistoryManager::new(config.history_file_path).get_history()
 }
 
 #[derive(Deserialize, Serialize)]
@@ -58,33 +57,27 @@ impl Record {
 }
 
 pub struct HistoryManager {
-    pub history_file_path: PathBuf,
+    pub file_path: PathBuf,
 }
 
 impl HistoryManager {
-    pub fn new(local_dir_path: PathBuf) -> Self {
-        HistoryManager {
-            history_file_path: local_dir_path,
-        }
+    pub fn new(file_path: PathBuf) -> Self {
+        HistoryManager { file_path }
     }
 
     pub fn add_record(&self, task: &HttpTask, config: &Config, id: String) -> Result<(), RawstErr> {
-        let file_path = Path::new(&self.history_file_path)
-            .join("rawst")
-            .join("history.json");
-
-        let json_str: String = fs::read_to_string(&file_path).unwrap_or_else(|_| {
+        // TODO: Using jsonl would mean we can simply append to the history file.
+        let json_str: String = fs::read_to_string(&self.file_path).unwrap_or_else(|_| {
             panic!(
                 "Couldn't read history database at '{}'.",
-                file_path.display()
+                self.file_path.display()
             )
         });
 
-        // NOTE: This breaks on changes to Record.
         let mut records: Vec<Record> = serde_json::from_str(&json_str).unwrap_or_else(|_| {
             panic!(
                 "Couldn't parse history database at '{}'.",
-                file_path.display()
+                self.file_path.display()
             )
         });
 
@@ -93,7 +86,7 @@ impl HistoryManager {
             task.iri.clone(),
             task.filename.clone(),
             task.content_length(),
-            config.download_path.clone(),
+            config.download_dir.clone(),
             config.threads,
         );
 
@@ -101,17 +94,13 @@ impl HistoryManager {
 
         let new_json_str = serde_json::to_string_pretty(&records).unwrap();
 
-        fs::write(file_path, new_json_str).map_err(RawstErr::FileError)?;
+        fs::write(&self.file_path, new_json_str).map_err(RawstErr::FileError)?;
 
         Ok(())
     }
 
     pub fn update_record(&self, id: String) -> Result<(), RawstErr> {
-        let file_path = Path::new(&self.history_file_path)
-            .join("rawst")
-            .join("history.json");
-
-        let json_str = fs::read_to_string(&file_path).unwrap();
+        let json_str = fs::read_to_string(&self.file_path).unwrap();
 
         let mut records: Vec<Record> =
             serde_json::from_str(&json_str).expect("There are no downloads");
@@ -124,17 +113,13 @@ impl HistoryManager {
 
         let new_json_str = serde_json::to_string_pretty(&records).unwrap();
 
-        fs::write(file_path, new_json_str).map_err(RawstErr::FileError)?;
+        fs::write(&self.file_path, new_json_str).map_err(RawstErr::FileError)?;
 
         Ok(())
     }
 
     pub fn get_history(&self) -> Result<(), RawstErr> {
-        let file_path = Path::new(&self.history_file_path)
-            .join("rawst")
-            .join("history.json");
-
-        let json_str = fs::read_to_string(file_path).unwrap();
+        let json_str = fs::read_to_string(&self.file_path).unwrap();
 
         let value: Value = serde_json::from_str(&json_str).expect("There are no downloads");
 
@@ -164,11 +149,7 @@ impl HistoryManager {
     }
 
     pub fn get_recent_pending(&self) -> Result<Option<Record>, RawstErr> {
-        let file_path = Path::new(&self.history_file_path)
-            .join("rawst")
-            .join("history.json");
-
-        let json_str = fs::read_to_string(&file_path).unwrap();
+        let json_str = fs::read_to_string(&self.file_path).unwrap();
 
         let records: Vec<Record> = serde_json::from_str(&json_str).expect("There are no downloads");
 
@@ -182,11 +163,7 @@ impl HistoryManager {
     }
 
     pub fn get_record(&self, id: &String) -> Result<Option<Record>, RawstErr> {
-        let file_path = Path::new(&self.history_file_path)
-            .join("rawst")
-            .join("history.json");
-
-        let json_str = fs::read_to_string(&file_path).unwrap();
+        let json_str = fs::read_to_string(&self.file_path).unwrap();
 
         let records: Vec<Record> = serde_json::from_str(&json_str).expect("There are no downloads");
 

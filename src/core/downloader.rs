@@ -34,7 +34,7 @@ pub async fn url_download(args: DownloadArgs, mut config: Config) -> Result<(), 
 
     let http_task = engine.create_http_task(iri, (&save_as).into()).await?;
 
-    let history_manager = HistoryManager::new(config.config_path.clone());
+    let history_manager = HistoryManager::new(config.history_file_path.clone());
 
     let current_time = Local::now();
 
@@ -54,7 +54,7 @@ pub async fn list_download(args: DownloadArgs, mut config: Config) -> Result<(),
 
     let mut engine = Engine::new(config.clone());
 
-    let history_manager = HistoryManager::new(config.config_path.clone());
+    let history_manager = HistoryManager::new(config.config_dir.clone());
 
     let file_path = args.input_file.ok_or(RawstErr::InvalidArgs)?;
 
@@ -101,7 +101,7 @@ pub async fn resume_download(args: ResumeArgs, mut config: Config) -> Result<(),
         .next()
         .ok_or(RawstErr::InvalidArgs)?;
 
-    let history_manager = HistoryManager::new(config.config_path.clone());
+    let history_manager = HistoryManager::new(config.history_file_path.clone());
 
     let record = if id == "auto" {
         history_manager.get_recent_pending()?

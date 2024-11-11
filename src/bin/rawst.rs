@@ -4,7 +4,6 @@ use rawst::core::config::Config;
 use rawst::core::downloader;
 use rawst::core::errors::RawstErr;
 use rawst::core::history;
-use rawst::core::io::config_exist;
 
 #[tokio::main]
 async fn main() -> Result<(), RawstErr> {
@@ -16,9 +15,13 @@ async fn main() -> Result<(), RawstErr> {
 }
 
 pub async fn run(cmd: Command) -> Result<(), RawstErr> {
-    let config = match config_exist() {
-        true => Config::load().await?,
-        false => Config::build().await?,
+    let config = match Config::load().await {
+        Ok(config) => config,
+        Err(_) => {
+            let config = Config::default();
+            config.initialise_files().await?;
+            config
+        }
     };
 
     match cmd {

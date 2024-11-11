@@ -46,7 +46,7 @@ impl HttpHandler {
             .map_err(RawstErr::HttpError)?;
 
         if response.status().is_success() {
-            create_file(task, response, progressbar, &config.download_path).await?;
+            create_file(task, response, progressbar, &config.download_dir).await?;
         }
 
         Ok(())
@@ -77,7 +77,7 @@ impl HttpHandler {
                         .map_err(RawstErr::HttpError)?;
 
                     if response.status().is_success() {
-                        create_cache(i, task, response, progressbar, &config.cache_path).await?;
+                        create_cache(i, task, response, progressbar, &config.cache_dir).await?;
                     }
                 }
 
