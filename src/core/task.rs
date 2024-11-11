@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use std::sync::{
     atomic::{AtomicU64, Ordering},
     Arc,
@@ -5,8 +6,6 @@ use std::sync::{
 
 use iri_string::types::IriString;
 use reqwest::header::HeaderMap;
-
-use crate::core::utils::FileName;
 
 #[derive(Clone, Debug)]
 pub struct Chunk {
@@ -40,7 +39,7 @@ pub enum ChunkType {
 #[derive(Clone, Debug)]
 pub struct HttpTask {
     pub iri: IriString,
-    pub filename: FileName,
+    pub filename: PathBuf,
     pub total_downloaded: Arc<AtomicU64>,
     pub chunk_data: ChunkType,
 
@@ -52,10 +51,12 @@ pub struct HttpTask {
 impl HttpTask {
     pub fn new(
         iri: IriString,
-        filename: FileName,
+        filename: PathBuf,
         cached_headers: HeaderMap,
         number_of_chunks: usize,
     ) -> Self {
+        assert!(filename.is_relative());
+
         let chunk_data = if number_of_chunks == 1 {
             ChunkType::None
         } else {

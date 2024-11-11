@@ -1,4 +1,3 @@
-use std::fs;
 use std::path::Path;
 use std::path::PathBuf;
 use std::sync::atomic::Ordering;
@@ -13,10 +12,10 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt, BufReader, BufWriter};
 use crate::core::config::Config;
 use crate::core::errors::RawstErr;
 use crate::core::task::{ChunkType, HttpTask};
-use crate::core::utils::FileName;
+use crate::core::utils::chunk_file_name;
 
-pub async fn merge_files(filename: &FileName, config: &Config) -> Result<(), RawstErr> {
-    let output_path = Path::new(&config.download_path).join(filename.to_string());
+pub async fn merge_files(filename: &PathBuf, config: &Config) -> Result<(), RawstErr> {
+    let output_path = Path::new(&config.download_path).join(filename);
 
     let output_file = File::create(output_path)
         .await
@@ -28,14 +27,12 @@ pub async fn merge_files(filename: &FileName, config: &Config) -> Result<(), Raw
 
     // Creates a closure for each temporary file read operation
     (0..config.threads).for_each(|i| {
-        let formatted_temp_filename = format!("{}-{}.tmp", filename.stem, i);
-
-        let temp_file_path = Path::new(&config.cache_path).join(formatted_temp_filename);
+        let chunk_filename = chunk_file_name(filename, i);
+        assert!(chunk_filename.is_relative());
+        let chunk_path = Path::new(&config.cache_path).join(chunk_filename);
 
         let io_task = tokio::spawn(async move {
-            let temp_file = File::open(&temp_file_path)
-                .await
-                .map_err(RawstErr::FileError)?;
+            let temp_file = File::open(&chunk_path).await.map_err(RawstErr::FileError)?;
             let mut temp_file = BufReader::new(temp_file);
             let mut buffer = Vec::new();
 
@@ -44,9 +41,7 @@ pub async fn merge_files(filename: &FileName, config: &Config) -> Result<(), Raw
                 .await
                 .map_err(RawstErr::FileError)?;
 
-            remove_file(temp_file_path)
-                .await
-                .map_err(RawstErr::FileError)?;
+            remove_file(chunk_path).await.map_err(RawstErr::FileError)?;
 
             Ok::<_, RawstErr>(buffer)
         });
@@ -74,14 +69,14 @@ pub async fn create_file(
     task: &HttpTask,
     response: Response,
     pb: &ProgressBar,
-    base_path: &String,
+    base_path: &Path,
 ) -> Result<(), RawstErr> {
-    let filepath = Path::new(base_path).join(task.filename.to_string());
+    let file_path = base_path.join(task.filename.clone());
 
     let mut file = File::options()
         .append(true)
         .create(true)
-        .open(filepath)
+        .open(file_path)
         .await
         .map_err(RawstErr::FileError)?;
 
@@ -108,16 +103,18 @@ pub async fn create_cache(
     task: &HttpTask,
     response: Response,
     pb: &ProgressBar,
-    base_path: &String,
+    base_path: &Path,
 ) -> Result<(), RawstErr> {
     if let ChunkType::Multiple(chunks) = &task.chunk_data {
         if chunks[chunk_number].is_downloaded() {
             return Ok(());
         }
 
-        let temp_filepath = format!("{}-{}.tmp", task.filename.stem, chunk_number);
+        let chunk_file_name = chunk_file_name(&task.filename, chunk_number);
+        assert!(chunk_file_name.is_relative());
+        assert!(base_path.is_dir());
 
-        let filepath = Path::new(base_path).join(temp_filepath);
+        let filepath = base_path.join(chunk_file_name);
 
         let mut file = File::options()
             .append(true)
@@ -153,7 +150,7 @@ pub async fn create_cache(
 }
 
 pub fn get_cache_sizes(
-    filename: String,
+    filename: &PathBuf,
     threads: usize,
     config: Config,
 ) -> Result<Vec<u64>, RawstErr> {
@@ -163,19 +160,17 @@ pub fn get_cache_sizes(
         false => {
             let path = Path::new(&config.download_path).join(filename);
 
-            let meta_data = fs::metadata(path).unwrap();
+            let meta_data = std::fs::metadata(path).unwrap();
 
             cache_sizes.push(meta_data.len());
         }
         true => {
             (0..threads).for_each(|i| {
-                let (filename, _extension) = filename.rsplit_once(".").unwrap();
+                let chunk_filename = chunk_file_name(filename, i);
 
-                let formatted_temp_filename = format!("{}-{}.tmp", filename.trim(), i);
+                let path = Path::new(&config.cache_path).join(chunk_filename);
 
-                let path = Path::new(&config.cache_path).join(formatted_temp_filename);
-
-                let meta_data = fs::metadata(path).unwrap();
+                let meta_data = std::fs::metadata(path).unwrap();
 
                 cache_sizes.push(meta_data.len());
             });
@@ -188,6 +183,7 @@ pub fn get_cache_sizes(
 pub fn config_exist() -> bool {
     // Defaults to ~/.local/share/rawst/
     let base_path = BaseDirs::new().unwrap().data_local_dir().join("rawst");
+    assert!(base_path.is_dir());
 
     // Defaults to ~/.local/share/rawst/config.toml
     let config_file_path = &base_path.join("config.toml");

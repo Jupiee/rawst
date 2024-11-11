@@ -64,7 +64,7 @@ pub struct DownloadArgs {
     // Outputs
     /// The path to the downloaded files
     #[arg(long)]
-    pub output_file_path: Vec<String>,
+    pub output_file_path: Vec<PathBuf>,
 }
 
 fn limit_max_download_threads(s: &str) -> Result<u8, String> {

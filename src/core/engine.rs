@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use futures::stream::{self, StreamExt};
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use iri_string::types::IriString;
@@ -24,9 +26,11 @@ impl Engine {
     }
 
     pub async fn http_download(&self, task: HttpTask) -> Result<(), RawstErr> {
+        let file_name_str = task.filename.display().to_string();
+
         let progressbar = self
             .multi_bar
-            .add(ProgressBar::new(task.content_length()).with_message(task.filename.to_string()));
+            .add(ProgressBar::new(task.content_length()).with_message(file_name_str));
 
         progressbar.set_style(ProgressStyle::with_template("{msg} | {bytes}/{total_bytes} | [{wide_bar:.green/white}] | {eta} | [{decimal_bytes_per_sec}]")
         .unwrap()
@@ -72,7 +76,7 @@ impl Engine {
     pub async fn create_http_task(
         &mut self,
         iri: IriString,
-        save_as: Option<&String>,
+        save_as: Option<&PathBuf>,
     ) -> Result<HttpTask, RawstErr> {
         let cached_headers = self.http_handler.cache_headers(&iri).await?;
 
@@ -81,8 +85,9 @@ impl Engine {
             None => extract_filename_from_url(&iri),
         };
 
-        if save_as.is_some() {
-            filename.stem = save_as.unwrap().to_owned();
+        if let Some(save_as) = save_as {
+            filename = PathBuf::from(save_as.file_name().unwrap());
+            assert!(filename.is_relative());
         }
 
         let mut task = HttpTask::new(iri, filename, cached_headers, self.config.threads);
