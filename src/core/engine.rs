@@ -26,6 +26,7 @@ impl Engine {
     }
 
     pub async fn http_download(&self, task: HttpTask) -> Result<(), RawstErr> {
+        log::trace!("Starting HTTP download (task:{task:?})");
         let file_name_str = task.filename.display().to_string();
 
         let progressbar = self
@@ -78,6 +79,7 @@ impl Engine {
         iri: IriString,
         save_as: Option<&PathBuf>,
     ) -> Result<HttpTask, RawstErr> {
+        log::trace!("Creating HTTP download task (iri:{iri:?}, save_as:{save_as:?})");
         let cached_headers = self.http_handler.cache_headers(&iri).await?;
 
         let mut filename = match extract_filename_from_header(&cached_headers) {

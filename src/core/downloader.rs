@@ -16,6 +16,7 @@ use crate::core::task::HttpTask;
 pub async fn download(args: DownloadArgs, config: Config) -> Result<(), RawstErr> {
     // TODO: Fuse url_download and list_download
     // TODO: Support downloading many elements from each source
+    log::trace!("Downloading files ({args:?}, {config:?})");
     if args.input_file.is_some() {
         list_download(args, config).await
     } else {
@@ -95,6 +96,7 @@ pub async fn list_download(args: DownloadArgs, mut config: Config) -> Result<(),
 }
 
 pub async fn resume_download(args: ResumeArgs, mut config: Config) -> Result<(), RawstErr> {
+    log::trace!("Resuming download (args:{args:?}, config:{config:?})");
     let id = args
         .download_ids
         .into_iter()

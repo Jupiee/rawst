@@ -36,7 +36,7 @@ pub enum ChunkType {
     None,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct HttpTask {
     pub iri: IriString,
     pub filename: PathBuf,
@@ -46,6 +46,16 @@ pub struct HttpTask {
     // Cached headermap from Head request
     // Efficient for header values retrieval
     headers: HeaderMap,
+}
+
+impl std::fmt::Debug for HttpTask {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(
+            f,
+            "HttpTask{{iri:{}, filename:{:?}, ...}}",
+            self.iri, self.filename
+        )
+    }
 }
 
 impl HttpTask {
