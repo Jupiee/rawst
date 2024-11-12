@@ -1,5 +1,6 @@
 use std::fs;
 use std::path::Path;
+use std::path::PathBuf;
 
 use chrono::prelude::Local;
 use iri_string::types::IriString;
@@ -24,9 +25,9 @@ struct Downloads {
 pub struct Record {
     pub id: String,
     pub iri: IriString,
-    pub file_name: String,
+    pub file_name: PathBuf,
     pub file_size: u64,
-    pub file_location: String,
+    pub file_location: PathBuf,
     pub threads_used: usize,
     pub timestamp: String,
     pub status: String,
@@ -36,9 +37,9 @@ impl Record {
     pub fn new(
         id: String,
         iri: IriString,
-        file_name: String,
+        file_name: PathBuf,
         file_size: u64,
-        file_location: String,
+        file_location: PathBuf,
         threads_used: usize,
     ) -> Record {
         let current_time = Local::now();
@@ -57,11 +58,11 @@ impl Record {
 }
 
 pub struct HistoryManager {
-    pub history_file_path: String,
+    pub history_file_path: PathBuf,
 }
 
 impl HistoryManager {
-    pub fn new(local_dir_path: String) -> Self {
+    pub fn new(local_dir_path: PathBuf) -> Self {
         HistoryManager {
             history_file_path: local_dir_path,
         }
@@ -72,7 +73,7 @@ impl HistoryManager {
             .join("rawst")
             .join("history.json");
 
-        let json_str = fs::read_to_string(&file_path).unwrap_or_else(|_| {
+        let json_str: String = fs::read_to_string(&file_path).unwrap_or_else(|_| {
             panic!(
                 "Couldn't read history database at '{}'.",
                 file_path.display()
@@ -90,7 +91,7 @@ impl HistoryManager {
         let new_record = Record::new(
             id,
             task.iri.clone(),
-            task.filename.to_string(),
+            task.filename.clone(),
             task.content_length(),
             config.download_path.clone(),
             config.threads,

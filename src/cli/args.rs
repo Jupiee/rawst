@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use iri_string::types::IriString;
 
 use clap::Args;
@@ -53,7 +55,7 @@ pub struct DownloadArgs {
     // Inputs
     /// File where to look for download IRIs
     #[arg(short, long, default_value=None)]
-    pub input_file: Option<String>,
+    pub input_file: Option<PathBuf>,
 
     /// The IRIs to download
     #[arg()]
@@ -62,7 +64,7 @@ pub struct DownloadArgs {
     // Outputs
     /// The path to the downloaded files
     #[arg(long)]
-    pub output_file_path: Vec<String>,
+    pub output_file_path: Vec<PathBuf>,
 }
 
 fn limit_max_download_threads(s: &str) -> Result<u8, String> {

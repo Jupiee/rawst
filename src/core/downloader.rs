@@ -115,16 +115,14 @@ pub async fn resume_download(args: ResumeArgs, mut config: Config) -> Result<(),
             if data.status == "Pending" {
                 config.threads = data.threads_used;
 
-                let (file_stem, _) = data.file_name.rsplit_once(".").unwrap();
-
                 let mut engine = Engine::new(config.clone());
 
                 let mut http_task = engine
-                    .create_http_task(data.iri, Some(&file_stem.trim().to_owned()))
+                    .create_http_task(data.iri, Some(&data.file_name))
                     .await?;
 
                 let cache_sizes =
-                    get_cache_sizes(data.file_name, data.threads_used, config).unwrap();
+                    get_cache_sizes(&data.file_name, data.threads_used, config).unwrap();
 
                 http_task.calculate_x_offsets(&cache_sizes);
 

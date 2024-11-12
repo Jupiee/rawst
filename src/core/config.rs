@@ -1,6 +1,7 @@
 use crate::core::errors::RawstErr;
 
 use std::path::Path;
+use std::path::PathBuf;
 
 use directories::{BaseDirs, UserDirs};
 use serde::{Deserialize, Serialize};
@@ -10,9 +11,9 @@ use toml;
 
 #[derive(Deserialize, Serialize, Clone)]
 pub struct Config {
-    pub download_path: String,
-    pub cache_path: String,
-    pub config_path: String,
+    pub download_path: PathBuf,
+    pub cache_path: PathBuf,
+    pub config_path: PathBuf,
     pub threads: usize,
 }
 
@@ -24,9 +25,9 @@ impl Default for Config {
         let local_dir = base_dirs.data_local_dir();
 
         Config {
-            download_path: user_dirs.download_dir().unwrap().display().to_string(),
-            cache_path: local_dir.join("rawst").join("cache").display().to_string(),
-            config_path: local_dir.display().to_string(),
+            download_path: user_dirs.download_dir().unwrap().to_path_buf(),
+            cache_path: local_dir.join("rawst").join("cache").to_path_buf(),
+            config_path: local_dir.to_path_buf(),
             threads: 1,
         }
     }
