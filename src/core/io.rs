@@ -185,9 +185,12 @@ pub fn get_cache_sizes(
 }
 
 pub fn config_exist() -> bool {
+    // Defaults to ~/.local/share/rawst/
     let base_path = BaseDirs::new().unwrap().data_local_dir().join("rawst");
 
+    // Defaults to ~/.local/share/rawst/config.toml
     let config_file_path = &base_path.join("config.toml");
+    // Defaults to ~/.local/share/rawst/history.json
     let history_file_path = &base_path.join("history.json");
 
     config_file_path.exists() && history_file_path.exists()

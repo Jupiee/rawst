@@ -1,11 +1,12 @@
+use futures::stream::{self, StreamExt};
+use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
+use iri_string::types::IriString;
+
 use crate::core::config::Config;
 use crate::core::errors::RawstErr;
 use crate::core::http_handler::HttpHandler;
 use crate::core::task::HttpTask;
 use crate::core::utils::{extract_filename_from_header, extract_filename_from_url};
-
-use futures::stream::{self, StreamExt};
-use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 
 pub struct Engine {
     config: Config,
@@ -70,21 +71,21 @@ impl Engine {
 
     pub async fn create_http_task(
         &mut self,
-        url: String,
+        iri: IriString,
         save_as: Option<&String>,
     ) -> Result<HttpTask, RawstErr> {
-        let cached_headers = self.http_handler.cache_headers(&url).await?;
+        let cached_headers = self.http_handler.cache_headers(&iri).await?;
 
         let mut filename = match extract_filename_from_header(&cached_headers) {
             Some(result) => result,
-            None => extract_filename_from_url(&url),
+            None => extract_filename_from_url(&iri),
         };
 
         if save_as.is_some() {
             filename.stem = save_as.unwrap().to_owned();
         }
 
-        let mut task = HttpTask::new(url, filename, cached_headers, self.config.threads);
+        let mut task = HttpTask::new(iri, filename, cached_headers, self.config.threads);
 
         // checks if the server allows to receive byte ranges for concurrent download
         // otherwise uses single thread

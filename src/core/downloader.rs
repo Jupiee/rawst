@@ -1,5 +1,10 @@
+use std::sync::atomic::Ordering;
+
+use base64::{prelude::BASE64_STANDARD, Engine as Base64Engine};
+use chrono::prelude::Local;
+use iri_string::types::IriString;
+
 use crate::cli::args::DownloadArgs;
-use crate::cli::args::HistoryArgs;
 use crate::cli::args::ResumeArgs;
 use crate::core::config::Config;
 use crate::core::engine::Engine;
@@ -8,23 +13,26 @@ use crate::core::history::HistoryManager;
 use crate::core::io::{get_cache_sizes, read_links};
 use crate::core::task::HttpTask;
 
-use std::sync::atomic::Ordering;
-
-use base64::{prelude::BASE64_STANDARD, Engine as Base64Engine};
-use chrono::prelude::Local;
-
-// TODO: Fuse url_download and list_download
-// TODO: Support downloading many elements from each source
+pub async fn download(args: DownloadArgs, config: Config) -> Result<(), RawstErr> {
+    // TODO: Fuse url_download and list_download
+    // TODO: Support downloading many elements from each source
+    if args.input_file.is_some() {
+        list_download(args, config).await
+    } else {
+        url_download(args, config).await
+    }
+}
 
 pub async fn url_download(args: DownloadArgs, mut config: Config) -> Result<(), RawstErr> {
-    let url = args.files.into_iter().next().ok_or(RawstErr::InvalidArgs)?;
+    let iri: IriString = args.iris.into_iter().next().ok_or(RawstErr::InvalidArgs)?;
+
     let save_as = args.output_file_path.into_iter().next();
     // override the default count in config
     config.threads = args.threads.into();
 
     let mut engine = Engine::new(config.clone());
 
-    let http_task = engine.create_http_task(url, (&save_as).into()).await?;
+    let http_task = engine.create_http_task(iri, (&save_as).into()).await?;
 
     let history_manager = HistoryManager::new(config.config_path.clone());
 
@@ -56,10 +64,13 @@ pub async fn list_download(args: DownloadArgs, mut config: Config) -> Result<(),
     let mut http_tasks: Vec<HttpTask> = Vec::new();
 
     let url_list = link_string.split("\n").collect::<Vec<&str>>();
-    for (index, url) in url_list.iter().enumerate() {
-        let url = url.trim().to_string();
+    for (index, line) in url_list.iter().enumerate() {
+        let iri = line
+            .trim()
+            .parse::<IriString>()
+            .map_err(|_| RawstErr::InvalidArgs)?;
 
-        let http_task = engine.create_http_task(url, None).await?;
+        let http_task = engine.create_http_task(iri, None).await?;
 
         let current_time = Local::now();
 
@@ -79,14 +90,6 @@ pub async fn list_download(args: DownloadArgs, mut config: Config) -> Result<(),
     for id in task_ids.iter() {
         history_manager.update_record(id.clone())?;
     }
-
-    Ok(())
-}
-
-pub async fn display_history(_args: HistoryArgs, config: Config) -> Result<(), RawstErr> {
-    let history_manager = HistoryManager::new(config.config_path);
-
-    history_manager.get_history()?;
 
     Ok(())
 }
@@ -117,7 +120,7 @@ pub async fn resume_download(args: ResumeArgs, mut config: Config) -> Result<(),
                 let mut engine = Engine::new(config.clone());
 
                 let mut http_task = engine
-                    .create_http_task(data.url, Some(&file_stem.trim().to_owned()))
+                    .create_http_task(data.iri, Some(&file_stem.trim().to_owned()))
                     .await?;
 
                 let cache_sizes =

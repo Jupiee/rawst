@@ -1,3 +1,5 @@
+use iri_string::types::IriString;
+
 use clap::Args;
 use clap::CommandFactory;
 use clap::Parser;
@@ -55,7 +57,7 @@ pub struct DownloadArgs {
 
     /// The IRIs to download
     #[arg()]
-    pub files: Vec<String>,
+    pub iris: Vec<IriString>,
 
     // Outputs
     /// The path to the downloaded files

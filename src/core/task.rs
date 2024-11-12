@@ -1,11 +1,12 @@
-use crate::core::utils::FileName;
-
 use std::sync::{
     atomic::{AtomicU64, Ordering},
     Arc,
 };
 
+use iri_string::types::IriString;
 use reqwest::header::HeaderMap;
+
+use crate::core::utils::FileName;
 
 #[derive(Clone, Debug)]
 pub struct Chunk {
@@ -38,7 +39,7 @@ pub enum ChunkType {
 
 #[derive(Clone, Debug)]
 pub struct HttpTask {
-    pub url: String,
+    pub iri: IriString,
     pub filename: FileName,
     pub total_downloaded: Arc<AtomicU64>,
     pub chunk_data: ChunkType,
@@ -50,7 +51,7 @@ pub struct HttpTask {
 
 impl HttpTask {
     pub fn new(
-        url: String,
+        iri: IriString,
         filename: FileName,
         cached_headers: HeaderMap,
         number_of_chunks: usize,
@@ -62,7 +63,7 @@ impl HttpTask {
         };
 
         HttpTask {
-            url,
+            iri,
             filename,
             headers: cached_headers,
             total_downloaded: Arc::new(AtomicU64::new(0)),
