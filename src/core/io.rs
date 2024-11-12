@@ -2,7 +2,6 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::sync::atomic::Ordering;
 
-use directories::BaseDirs;
 use futures::{future::join_all, stream::StreamExt};
 use indicatif::ProgressBar;
 use reqwest::Response;
@@ -15,7 +14,7 @@ use crate::core::task::{ChunkType, HttpTask};
 use crate::core::utils::chunk_file_name;
 
 pub async fn merge_files(filename: &PathBuf, config: &Config) -> Result<(), RawstErr> {
-    let output_path = Path::new(&config.download_path).join(filename);
+    let output_path = config.download_dir.join(filename);
 
     let output_file = File::create(output_path)
         .await
@@ -29,7 +28,7 @@ pub async fn merge_files(filename: &PathBuf, config: &Config) -> Result<(), Raws
     (0..config.threads).for_each(|i| {
         let chunk_filename = chunk_file_name(filename, i);
         assert!(chunk_filename.is_relative());
-        let chunk_path = Path::new(&config.cache_path).join(chunk_filename);
+        let chunk_path = config.cache_dir.join(chunk_filename);
 
         let io_task = tokio::spawn(async move {
             let temp_file = File::open(&chunk_path).await.map_err(RawstErr::FileError)?;
@@ -158,7 +157,7 @@ pub fn get_cache_sizes(
 
     match threads > 1 {
         false => {
-            let path = Path::new(&config.download_path).join(filename);
+            let path = config.download_dir.join(filename);
 
             let meta_data = std::fs::metadata(path).unwrap();
 
@@ -168,7 +167,7 @@ pub fn get_cache_sizes(
             (0..threads).for_each(|i| {
                 let chunk_filename = chunk_file_name(filename, i);
 
-                let path = Path::new(&config.cache_path).join(chunk_filename);
+                let path = config.cache_dir.join(chunk_filename);
 
                 let meta_data = std::fs::metadata(path).unwrap();
 
@@ -178,19 +177,6 @@ pub fn get_cache_sizes(
     }
 
     Ok(cache_sizes)
-}
-
-pub fn config_exist() -> bool {
-    // Defaults to ~/.local/share/rawst/
-    let base_path = BaseDirs::new().unwrap().data_local_dir().join("rawst");
-    assert!(base_path.is_dir());
-
-    // Defaults to ~/.local/share/rawst/config.toml
-    let config_file_path = &base_path.join("config.toml");
-    // Defaults to ~/.local/share/rawst/history.json
-    let history_file_path = &base_path.join("history.json");
-
-    config_file_path.exists() && history_file_path.exists()
 }
 
 pub async fn read_links(filepath: &PathBuf) -> Result<String, RawstErr> {

@@ -85,9 +85,6 @@ pub struct ResumeArgs {
 #[derive(Args, Debug, PartialEq)]
 pub struct HistoryArgs {}
 
-// Implementation details
-// ----------------------
-
 /// Actual struct handled by clap
 ///
 /// Not really what we want to use directly as it has extra noise,
@@ -97,9 +94,21 @@ pub struct HistoryArgs {}
 /// - Default subcommand
 #[derive(Parser, Debug, PartialEq)]
 #[command(name = "rawst", version, about, long_about = None)]
-struct Arguments {
+#[clap(color = concolor_clap::color_choice())]
+pub struct Arguments {
     #[command(subcommand)]
-    command: Option<Command>,
+    pub command: Option<Command>,
+
+    #[arg(short, long)]
+    pub verbosity: Option<log::LevelFilter>,
+    #[arg(long)]
+    pub log_verbosity: Option<log::LevelFilter>,
+
+    #[command(flatten)]
+    pub color: concolor_clap::Color,
+
+    // Implementation details
+    // ----------------------
 
     // Hack to default to `rawst download ...`
     // The setup to make Download the default subcommand come from,
@@ -117,20 +126,22 @@ fn print_completions<G: Generator>(gen: G, cmd: &mut clap::Command) {
     clap_complete::generate(gen, cmd, cmd_name, &mut std::io::stdout());
 }
 
-pub fn get_command() -> Option<Command> {
-    let args = Arguments::parse();
+pub fn get() -> Arguments {
+    let mut args = Arguments::parse();
+
+    if let Some(default_command_args) = args.default_command {
+        args.default_command = None;
+        args.command = Some(Command::Download(default_command_args));
+    }
 
     if let Some(generator) = args.generator {
         let mut cmd = Arguments::command();
         eprintln!("Generating completion file for {generator:?}...");
         print_completions(generator, &mut cmd);
 
-        None
-    } else if let Some(default_download) = args.default_command {
-        Some(Command::Download(default_download))
-    } else if let Some(ref _command) = args.command {
-        args.command
-    } else {
-        None
+        args.command = None;
+        args.default_command = None;
     }
+
+    args
 }

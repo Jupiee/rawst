@@ -29,6 +29,7 @@ impl HttpHandler {
         progressbar: &ProgressBar,
         config: &Config,
     ) -> Result<(), RawstErr> {
+        log::trace!("Starting sequential download (task:{task:?}, config:{config:?})");
         let mut headers = HeaderMap::new();
 
         if let ChunkType::Single(chunk) = &task.chunk_data {
@@ -46,7 +47,7 @@ impl HttpHandler {
             .map_err(RawstErr::HttpError)?;
 
         if response.status().is_success() {
-            create_file(task, response, progressbar, &config.download_path).await?;
+            create_file(task, response, progressbar, &config.download_dir).await?;
         }
 
         Ok(())
@@ -58,6 +59,7 @@ impl HttpHandler {
         progressbar: &ProgressBar,
         config: &Config,
     ) -> Result<(), RawstErr> {
+        log::trace!("Starting concurrent download (task:{task:?}, config:{config:?})");
         // Creates a stream iter for downloading each chunk separately
         let download_tasks = stream::iter((0..config.threads).map(|i| {
             let client = &self.client;
@@ -77,7 +79,7 @@ impl HttpHandler {
                         .map_err(RawstErr::HttpError)?;
 
                     if response.status().is_success() {
-                        create_cache(i, task, response, progressbar, &config.cache_path).await?;
+                        create_cache(i, task, response, progressbar, &config.cache_dir).await?;
                     }
                 }
 
