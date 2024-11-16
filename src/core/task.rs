@@ -131,11 +131,7 @@ impl HttpTask {
                         .downloaded
                         .fetch_add(offsets[index], Ordering::SeqCst);
 
-                    let difference = chunks[index].y_offset - chunks[index].x_offset;
-
-                    if chunks[index].downloaded.load(Ordering::SeqCst) < difference {
-                        chunks[index].x_offset += *value;
-                    }
+                    chunks[index].x_offset += *value;
                 }
             }
             ChunkType::None => (),
