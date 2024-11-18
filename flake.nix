@@ -73,6 +73,9 @@
 
               # https://devenv.sh/reference/options/#packages
               packages = with pkgs; [
+                # Spellchecking
+                hunspellDicts.en_GB-large
+
                 # Rust
                 bacon
 
@@ -138,7 +141,8 @@
               '';
 
               enterTest = ''
-                cargo test
+                cargo test   --workspace --offline --all-targets --all-features --no-fail-fast
+                cargo clippy   --no-deps --offline --all-targets --all-features
               '';
             }
           ];
