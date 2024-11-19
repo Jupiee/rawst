@@ -68,6 +68,12 @@ impl HttpHandler {
             // Each closure has separate IO operation
             async move {
                 if let ChunkType::Multiple(chunks) = &task.chunk_data {
+
+                    if chunks[i].is_downloaded() {
+                        log::trace!("Chunk number {i:?} skipped: {:?}", chunks[i]);
+                        ()
+                    }
+
                     let response = client
                         .get(to_reqwest_url(&task.iri))
                         .header(

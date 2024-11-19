@@ -25,7 +25,9 @@ impl Chunk {
     }
 
     pub fn is_downloaded(&self) -> bool {
-        self.downloaded.load(Ordering::SeqCst) == self.y_offset + 1
+        // Each chunk file size is usually the difference of x and y offset added by 1
+        // (y_offset - x_offset) + 1
+        self.x_offset == self.y_offset + 1
     }
 }
 

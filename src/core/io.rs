@@ -105,9 +105,6 @@ pub async fn create_cache(
     base_path: &Path,
 ) -> Result<(), RawstErr> {
     if let ChunkType::Multiple(chunks) = &task.chunk_data {
-        if chunks[chunk_number].is_downloaded() {
-            return Ok(());
-        }
 
         let chunk_file_name = chunk_file_name(&task.filename, chunk_number);
         assert!(chunk_file_name.is_relative());
