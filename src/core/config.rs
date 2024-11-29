@@ -47,7 +47,7 @@ impl Config {
 
 fn format_timedate(dt: chrono::DateTime<chrono::Local>) -> String {
     // "2024-12-31_23:59:59"
-    format!("{}", dt.format("%Y-%m-%d_%H:%M:%S_%Z"))
+    format!("{}", dt.format("%Y-%m-%d_%Hh-%Mm-%Ss"))
 }
 
 impl Default for Config {
