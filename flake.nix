@@ -129,9 +129,6 @@
                       allFeatures = true;
                     };
                   };
-                  rustfmt = {
-                    enable = true;
-                  };
                 };
               };
 
