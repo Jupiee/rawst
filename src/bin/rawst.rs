@@ -18,8 +18,10 @@ async fn main() -> Result<(), RawstErr> {
             config
         }
     };
-
-    logger::init(&config, &args).map_err(|_| RawstErr::InitilisationError)?;
+    
+    if args.verbosity.is_some() {
+        logger::init(&config, &args).map_err(|_| RawstErr::InitilisationError)?;
+    }
 
     log::trace!("Arguments: {args:?}");
     log::trace!("Config: {config:?}");
