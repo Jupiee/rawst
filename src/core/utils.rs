@@ -38,5 +38,5 @@ pub fn extract_filename_from_header(headers: &HeaderMap) -> Option<PathBuf> {
 }
 
 pub fn chunk_file_name(filename: &Path, part: usize) -> PathBuf {
-    filename.with_added_extension(format!(".part-{}.tmp", part))
+    filename.with_added_extension(format!("part-{}.tmp", part))
 }
