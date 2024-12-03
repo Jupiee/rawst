@@ -24,6 +24,25 @@ pub async fn download(args: DownloadArgs, config: Config) -> Result<(), RawstErr
     }
 }
 
+pub async fn resume_download(args: ResumeArgs, config: Config) -> Result<(),RawstErr> {
+    let ids= args.download_ids;
+
+    if ids.len() > 1 {
+        for id in ids {
+            process_resume_request(id, config.clone()).await?
+
+        }
+
+        Ok(())
+    }
+    else {
+        let id= ids.iter().next().unwrap().to_string();
+        process_resume_request(id, config).await
+
+    }
+
+}
+
 pub async fn url_download(args: DownloadArgs, mut config: Config) -> Result<(), RawstErr> {
     let iri: IriString = args.iris.into_iter().next().ok_or(RawstErr::InvalidArgs)?;
 
@@ -95,14 +114,9 @@ pub async fn list_download(args: DownloadArgs, mut config: Config) -> Result<(),
     Ok(())
 }
 
-pub async fn resume_download(args: ResumeArgs, mut config: Config) -> Result<(), RawstErr> {
-    log::trace!("Resuming download (args:{args:?}, config:{config:?})");
-    let id = args
-        .download_ids
-        .into_iter()
-        .next()
-        .ok_or(RawstErr::InvalidArgs)?;
-
+pub async fn process_resume_request(id: String, mut config: Config) -> Result<(), RawstErr> {
+    log::trace!("Resuming download (id:{id:?}, config:{config:?})");
+    
     let history_manager = HistoryManager::new(config.history_file_path.clone());
 
     let record = if id == "auto" {

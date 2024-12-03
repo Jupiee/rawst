@@ -77,7 +77,7 @@ pub struct ResumeArgs {
     /// The Downloads to resume
     ///
     /// TODO: Default to resume the last download
-    #[arg()]
+    #[arg(default_value="auto")]
     pub download_ids: Vec<String>,
 }
 
