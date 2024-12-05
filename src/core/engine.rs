@@ -1,28 +1,148 @@
 use std::path::PathBuf;
+use std::sync::atomic::Ordering;
 
 use futures::stream::{self, StreamExt};
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use iri_string::types::IriString;
+use base64::{prelude::BASE64_STANDARD, Engine as Base64Engine};
+use chrono::prelude::Local;
 
 use crate::core::config::Config;
 use crate::core::errors::RawstErr;
 use crate::core::http_handler::HttpHandler;
 use crate::core::task::HttpTask;
 use crate::core::utils::{extract_filename_from_header, extract_filename_from_url};
+use crate::core::history::HistoryManager;
+use crate::cli::args::DownloadArgs;
+use crate::core::io::{get_cache_sizes, read_links};
 
 pub struct Engine {
     config: Config,
     http_handler: HttpHandler,
+    history_manager: HistoryManager,
     multi_bar: MultiProgress,
 }
 
 impl Engine {
     pub fn new(config: Config) -> Self {
+
+        let history_manager= HistoryManager::new(config.history_file_path.clone());
+
         Engine {
             config,
             http_handler: HttpHandler::new(),
+            history_manager,
             multi_bar: MultiProgress::new(),
         }
+    }
+
+    pub async fn process_url_download(mut self, args: DownloadArgs) -> Result<(), RawstErr> {
+        let iri: IriString = args.iris.into_iter().next().ok_or(RawstErr::InvalidArgs)?;
+    
+        let save_as = args.output_file_path.into_iter().next();
+        // override the default count in config
+        self.config.threads = args.threads.into();
+
+        let http_task = self.create_http_task(iri, (&save_as).into()).await?;
+    
+        let current_time = Local::now();
+    
+        let encoded_timestamp_as_id = BASE64_STANDARD.encode(current_time.timestamp().to_be_bytes());
+    
+        self.history_manager.add_record(&http_task, &self.config, encoded_timestamp_as_id.clone())?;
+    
+        self.http_download(http_task).await?;
+    
+        self.history_manager.update_record(encoded_timestamp_as_id)?;
+    
+        Ok(())
+    }
+
+    pub async fn process_list_download(mut self, args: DownloadArgs) -> Result<(), RawstErr> {
+        self.config.threads = 1;
+    
+        let file_path = args.input_file.ok_or(RawstErr::InvalidArgs)?;
+    
+        let link_string = read_links(&file_path).await?;
+    
+        let mut task_ids: Vec<String> = Vec::new();
+        let mut http_tasks: Vec<HttpTask> = Vec::new();
+    
+        let url_list = link_string.split("\n").collect::<Vec<&str>>();
+        for (index, line) in url_list.iter().enumerate() {
+            let iri = line
+                .trim()
+                .parse::<IriString>()
+                .map_err(|_| RawstErr::InvalidArgs)?;
+    
+            let http_task = self.create_http_task(iri, None).await?;
+    
+            let current_time = Local::now();
+    
+            // Adding index number to distinguish between each id of each task
+            let encoded_timestamp_as_id =
+                BASE64_STANDARD.encode(current_time.timestamp().to_be_bytes()) + &index.to_string();
+    
+            self.history_manager.add_record(&http_task, &self.config, encoded_timestamp_as_id.clone())?;
+    
+            http_tasks.push(http_task);
+    
+            task_ids.push(encoded_timestamp_as_id);
+        }
+    
+        self.list_http_download(http_tasks).await?;
+    
+        for id in task_ids.iter() {
+            self.history_manager.update_record(id.to_string())?;
+        }
+    
+        Ok(())
+    }
+
+    pub async fn process_resume_request(&mut self, id: String) -> Result<(), RawstErr> {
+        log::trace!("Resuming download (id:{:?}, config:{:?})", id, self.config);
+        let record = if id == "auto" {
+            self.history_manager.get_recent_pending()?
+        } else {
+            self.history_manager.get_record(&id)?
+        };
+    
+        match record {
+            Some(data) => {
+                // notice: I can also get total file size by getting content length through http_task object
+                if data.status == "Pending" {
+                    self.config.threads = data.threads_used;
+
+                    let mut http_task = self
+                        .create_http_task(data.iri, Some(&data.file_name))
+                        .await?;
+    
+                    let cache_sizes =
+                        get_cache_sizes(&data.file_name, data.threads_used, self.config.clone()).unwrap();
+    
+                    http_task.calculate_x_offsets(&cache_sizes);
+    
+                    http_task
+                        .total_downloaded
+                        .fetch_add(cache_sizes.iter().sum::<u64>(), Ordering::SeqCst);
+    
+                    self.http_download(http_task).await?;
+    
+                    self.history_manager.update_record(data.id)?
+                } else {
+                    println!("The file is already downloaded");
+    
+                    return Ok(());
+                }
+            }
+            None => {
+                println!("Record with id {:?} not found", id);
+    
+                return Ok(());
+            }
+        }
+    
+        Ok(())
     }
 
     pub async fn http_download(&self, task: HttpTask) -> Result<(), RawstErr> {
