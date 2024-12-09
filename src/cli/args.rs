@@ -54,6 +54,7 @@ pub struct DownloadArgs {
     pub threads: u8,
 
     // Inputs
+    // TODO: merge iris arg and input_file arg into one arg
     /// File where to look for download IRIs
     #[arg(short, long, default_value=None)]
     pub input_file: Option<PathBuf>,

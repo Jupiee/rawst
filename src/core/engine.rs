@@ -60,7 +60,9 @@ impl Engine {
 
     pub async fn process_list_download(mut self, args: DownloadArgs) -> Result<(), RawstErr> {
         self.config.threads = 1;
-    
+        
+        // TODO: move url parsing outside of this function
+        // TODO: this function will accept only vector of urls
         let file_path = args.input_file.ok_or(RawstErr::InvalidArgs)?;
     
         let link_string = read_links(&file_path).await?;
