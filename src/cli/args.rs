@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+use directories::BaseDirs;
 use iri_string::types::IriString;
 
 use clap::Args;
@@ -121,9 +122,12 @@ pub struct Arguments {
     generator: Option<Shell>,
 }
 
-fn print_completions<G: Generator>(gen: G, cmd: &mut clap::Command) {
+fn generate_completion_script<G: Generator>(gen: G, cmd: &mut clap::Command) {
     let cmd_name = cmd.get_name().to_string();
-    clap_complete::generate(gen, cmd, cmd_name, &mut std::io::stdout());
+    let base_dirs = BaseDirs::new().unwrap();
+    let config_dir = base_dirs.config_dir().join("rawst").to_path_buf();
+    clap_complete::generate_to(gen, cmd, cmd_name, &config_dir).unwrap();
+    println!("Generated completion script at {}", config_dir.display())
 }
 
 pub fn get() -> Arguments {
@@ -137,7 +141,7 @@ pub fn get() -> Arguments {
     if let Some(generator) = args.generator {
         let mut cmd = Arguments::command();
         eprintln!("Generating completion file for {generator:?}...");
-        print_completions(generator, &mut cmd);
+        generate_completion_script(generator, &mut cmd);
 
         args.command = None;
         args.default_command = None;
