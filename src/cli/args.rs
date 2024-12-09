@@ -77,8 +77,6 @@ fn limit_max_download_threads(s: &str) -> Result<u8, String> {
 #[derive(Args, Debug, PartialEq)]
 pub struct ResumeArgs {
     /// The Downloads to resume
-    ///
-    /// TODO: Default to resume the last download
     #[arg(default_value="auto")]
     pub download_ids: Vec<String>,
 }
