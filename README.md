@@ -1,6 +1,6 @@
 <h1 align="center">Rawst Download Manager</h1>
 
-[![Latest stable release](https://img.shields.io/github/release/jupiee/rawst.svg?maxAge=3600)](https://github.com/jupiee/rawst/releases) [![GitHub license](https://img.shields.io/github/license/jupiee/rawst.svg)](https://github.com/jupiee/rawst/blob/master/LICENSE) [![Total downloads](https://img.shields.io/github/downloads/jupiee/rawst/total.svg)](https://github.com/jupiee/rawst)
+[![LBuild](https://img.shields.io/github/actions/workflow/status/Jupiee/rawst/ci.yml)]() [![Latest stable release](https://img.shields.io/github/release/jupiee/rawst.svg?maxAge=3600)](https://github.com/jupiee/rawst/releases) [![GitHub license](https://img.shields.io/github/license/jupiee/rawst.svg)](https://github.com/jupiee/rawst/blob/master/LICENSE) [![Total downloads](https://img.shields.io/github/downloads/jupiee/rawst/total.svg)](https://github.com/jupiee/rawst)
 
 > **Content**
 > - [About](#about)
@@ -41,6 +41,8 @@ Snag your files efficiently with Rawst downloader, written in rust for blazingly
 <details>
     <summary>Build from source</summary>
 
+- **Requirements**
+  - rust nightly is required
 - run ``cargo build --release``
 - move the binary to corresponding directories
   - Windows => ``C:\Users\%USERNAME%\AppData\Local\Microsoft\WindowsApps``
@@ -50,17 +52,52 @@ Snag your files efficiently with Rawst downloader, written in rust for blazingly
 
 ### ⚙️ **Usage**
 ```
-Usage: rawst [OPTIONS]
+Usage: rawst [OPTIONS] [IRIS]... [COMMAND]
+
+Commands:
+  download  Download files
+  resume    Resume partial downloads
+  history   View download history
+  help      Print this message or the help of the given subcommand(s)
+
+Arguments:
+  [IRIS]...
+          The IRIs to download
 
 Options:
-  -u, --url <Url>              Url to download
-      --resume <Resume>        Resume download of the given record ID
-  -f, --file <InputFile>       Filepath to the file with links
-      --history                Display download history
-  -s, --save-as <Saveas>       Save file as custom name
-  -m, --max-threads <Threads>  Maximum number of concurrent downloads
-  -h, --help                   Print help
-  -V, --version                Print version
+  -v, --verbosity <VERBOSITY>
+
+
+      --log-verbosity <LOG_VERBOSITY>
+
+
+      --color <WHEN>
+          Controls when to use color
+
+          [default: auto]
+          [possible values: auto, always, never]
+
+  -t, --threads <THREADS>
+          Maximum amount of threads used to download
+
+          Limited to 8 threads to avoid throttling
+
+          [default: 8]
+
+  -i, --input-file <INPUT_FILE>
+          File where to look for download IRIs
+
+      --output-file-path <OUTPUT_FILE_PATH>
+          The path to the downloaded files
+
+      --generate <GENERATOR>
+          [possible values: bash, elvish, fish, powershell, zsh]
+
+  -h, --help
+          Print help (see a summary with '-h')
+
+  -V, --version
+          Print version
 ```
 
 ### **Screenshots**
