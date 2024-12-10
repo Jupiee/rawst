@@ -9,8 +9,6 @@ jobs:
     name: "Build and Upload Binaries"
     strategy:
       matrix:
-        toolchain:
-          - nightly
         include:
           - target: x86_64-unknown-linux-gnu
             os: ubuntu-latest
@@ -24,6 +22,7 @@ jobs:
       - name: Install stable Rust
         uses: dtolnay/rust-toolchain@nightly
         with:
+          toolchain: nightly
           targets: x86_64-unknown-linux-gnu, x86_64-pc-windows-msvc, aarch64-pc-windows-msvc
       - name: Upload binary
         uses: taiki-e/upload-rust-binary-action@v1
