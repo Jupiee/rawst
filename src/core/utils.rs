@@ -7,7 +7,14 @@ use reqwest::header::HeaderMap;
 pub fn extract_filename_from_url(iri: &IriString) -> PathBuf {
     // "http://example.com/path/to/file.tar.gz?query#frag"
     // => "/path/to/file.tar.gz"
-    let full_path = PathBuf::from(iri.path_str());
+    let file_name = iri.path_str();
+    if file_name == "/" || !file_name.contains('.') {
+        let mut domain = iri.authority_str().unwrap().to_owned();
+        domain.push_str(".html");
+        return PathBuf::from(domain)
+    
+    }
+    let full_path = PathBuf::from(file_name);
     // => "file.tar.gz"
     let path = PathBuf::from(full_path.file_name().unwrap());
 
@@ -26,6 +33,7 @@ pub fn extract_filename_from_header(headers: &HeaderMap) -> Option<PathBuf> {
             for part in parts {
                 if let Some(filename) = part.trim().strip_prefix("filename=") {
                     let path = PathBuf::from(filename.trim_matches('"'));
+                    println!("path: {:?}", path);
                     assert!(path.is_relative());
                     return Some(path);
                 }
