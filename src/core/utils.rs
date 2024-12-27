@@ -33,7 +33,6 @@ pub fn extract_filename_from_header(headers: &HeaderMap) -> Option<PathBuf> {
             for part in parts {
                 if let Some(filename) = part.trim().strip_prefix("filename=") {
                     let path = PathBuf::from(filename.trim_matches('"'));
-                    println!("path: {:?}", path);
                     assert!(path.is_relative());
                     return Some(path);
                 }
