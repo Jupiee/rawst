@@ -211,6 +211,12 @@ impl Engine {
 
         if let Some(save_as) = save_as {
             let extension = filename.extension().unwrap();
+            let output_path = save_as.parent().unwrap();
+            if output_path.exists() {
+                self.config.download_dir = output_path.to_path_buf();
+
+            }
+            
             let mut new_filename = PathBuf::from(save_as.file_name().unwrap());
             new_filename.add_extension(extension);
             filename = new_filename;
