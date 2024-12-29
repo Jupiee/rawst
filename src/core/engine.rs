@@ -210,7 +210,10 @@ impl Engine {
         };
 
         if let Some(save_as) = save_as {
-            filename = PathBuf::from(save_as.file_name().unwrap());
+            let extension = filename.extension().unwrap();
+            let mut new_filename = PathBuf::from(save_as.file_name().unwrap());
+            new_filename.add_extension(extension);
+            filename = new_filename;
             assert!(filename.is_relative());
         }
 
