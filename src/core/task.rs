@@ -65,15 +65,10 @@ impl HttpTask {
         iri: IriString,
         filename: PathBuf,
         cached_headers: HeaderMap,
-        number_of_chunks: usize,
     ) -> Self {
         assert!(filename.is_relative());
 
-        let chunk_data = if number_of_chunks == 1 {
-            ChunkType::None
-        } else {
-            ChunkType::Multiple(Vec::with_capacity(number_of_chunks))
-        };
+        let chunk_data = ChunkType::None;
 
         HttpTask {
             iri,
@@ -84,8 +79,24 @@ impl HttpTask {
         }
     }
 
+    pub fn allocate_chunks(&mut self, number_of_chunks: usize) {
+
+        // This here is for building only single chunk for single thread downloads
+        // if the server allows for partial content. Useful for resuming downloads
+        // with one thread.
+        if number_of_chunks == 1 && self.allows_partial_content() {
+            self.chunk_data = ChunkType::Single(Chunk::new(0, 0));
+        }
+        else {
+            self.chunk_data = ChunkType::Multiple(Vec::with_capacity(number_of_chunks));
+        }
+
+    }
+
     pub fn calculate_chunks(&mut self, number_of_chunks: u64) {
         let total_size = self.content_length();
+
+        self.allocate_chunks(number_of_chunks as usize);
 
         match &mut self.chunk_data {
             ChunkType::Single(chunk) => {
@@ -115,10 +126,6 @@ impl HttpTask {
             }
             ChunkType::None => (),
         }
-    }
-
-    pub fn create_single_chunk(&mut self) {
-        self.chunk_data = ChunkType::Single(Chunk::new(0, 0));
     }
 
     pub fn calculate_x_offsets(&mut self, offsets: &[u64]) {

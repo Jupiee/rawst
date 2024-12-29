@@ -223,7 +223,7 @@ impl Engine {
             assert!(filename.is_relative());
         }
 
-        let mut task = HttpTask::new(iri, filename, cached_headers, self.config.threads);
+        let mut task = HttpTask::new(iri, filename, cached_headers);
 
         // checks if the server allows to receive byte ranges for concurrent download
         // otherwise uses single thread
@@ -231,11 +231,6 @@ impl Engine {
             println!("Warning!: Server doesn't allow partial content, sequentially downloading..");
             self.config.threads = 1
 
-        // This here is for building only single chunk for single thread downloads
-        // if the server allows for partial content. Useful for resuming downloads
-        // with one thread.
-        } else if self.config.threads == 1 && task.allows_partial_content() {
-            task.create_single_chunk();
         }
 
         task.calculate_chunks(self.config.threads as u64);
