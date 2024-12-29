@@ -115,8 +115,10 @@ impl Engine {
                 if data.status == "Pending" {
                     self.config.threads = data.threads_used;
 
+                    let file_name = PathBuf::from(&data.file_name.file_stem().unwrap());
+
                     let mut http_task = self
-                        .create_http_task(data.iri, Some(&data.file_name))
+                        .create_http_task(data.iri, Some(&file_name))
                         .await?;
     
                     let cache_sizes =
