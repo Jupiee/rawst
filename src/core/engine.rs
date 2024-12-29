@@ -120,7 +120,7 @@ impl Engine {
                         .await?;
     
                     let cache_sizes =
-                        get_cache_sizes(&data.file_name, data.threads_used, self.config.clone()).unwrap();
+                        get_cache_sizes(&data.file_name, data.threads_used, self.config.clone())?;
     
                     http_task.calculate_x_offsets(&cache_sizes);
     

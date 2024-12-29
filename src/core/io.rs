@@ -156,20 +156,21 @@ pub fn get_cache_sizes(
         false => {
             let path = config.download_dir.join(filename);
 
-            let meta_data = std::fs::metadata(path).unwrap();
+            let meta_data = std::fs::metadata(path).map_err(|err| RawstErr::FileError(err))?;
 
             cache_sizes.push(meta_data.len());
         }
         true => {
-            (0..threads).for_each(|i| {
+            (0..threads).try_for_each(|i| {
                 let chunk_filename = chunk_file_name(filename, i);
 
                 let path = config.cache_dir.join(chunk_filename);
 
-                let meta_data = std::fs::metadata(path).unwrap();
+                let meta_data = std::fs::metadata(path).map_err(|err| RawstErr::FileError(err))?;
 
                 cache_sizes.push(meta_data.len());
-            });
+                Ok::<_, RawstErr>(())
+            })?;
         }
     }
 
