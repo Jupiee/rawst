@@ -114,6 +114,7 @@ impl Engine {
                 // notice: I can also get total file size by getting content length through http_task object
                 if data.status == "Pending" {
                     self.config.threads = data.threads_used;
+                    self.config.download_dir = data.file_location;
 
                     let file_name = PathBuf::from(&data.file_name.file_stem().unwrap());
 
