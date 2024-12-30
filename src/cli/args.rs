@@ -30,7 +30,7 @@ pub enum Command {
     /// Resume partial downloads
     Resume(ResumeArgs),
     /// View download history
-    History(HistoryArgs),
+    History,
 }
 
 // Subcommands

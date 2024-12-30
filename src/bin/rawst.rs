@@ -38,7 +38,7 @@ async fn run(config: Config, args: Arguments) -> Result<(), RawstErr> {
         match cmd {
             Command::Download(args) => downloader::download(args, config).await?,
             Command::Resume(args) => downloader::resume_download(args, config).await?,
-            Command::History(args) => history::show_history(args, config).await?,
+            Command::History => history::show_history(config).await?,
         }
     }
 

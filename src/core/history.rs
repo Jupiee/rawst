@@ -6,12 +6,11 @@ use iri_string::types::IriString;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::cli::args::HistoryArgs;
 use crate::core::config::Config;
 use crate::core::errors::RawstErr;
 use crate::core::task::HttpTask;
 
-pub async fn show_history(_args: HistoryArgs, config: Config) -> Result<(), RawstErr> {
+pub async fn show_history(config: Config) -> Result<(), RawstErr> {
     HistoryManager::new(config.history_file_path).get_history()
 }
 
