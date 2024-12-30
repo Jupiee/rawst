@@ -81,10 +81,8 @@ impl HttpTask {
 
     pub fn allocate_chunks(&mut self, number_of_chunks: usize) {
 
-        // This here is for building only single chunk for single thread downloads
-        // if the server allows for partial content. Useful for resuming downloads
-        // with one thread.
-        if number_of_chunks == 1 && self.allows_partial_content() {
+        // Allocates chunk space depending on number of threads 
+        if number_of_chunks == 1 {
             self.chunk_data = ChunkType::Single(Chunk::new(0, 0));
         }
         else {
