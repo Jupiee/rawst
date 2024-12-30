@@ -1,5 +1,5 @@
 [package]
-name = "rawst"
+name = "rawst_dl"
 version = "0.5.0"
 authors = ["Faseeh Shahzad"]
 description = "Snag your files efficiently with Rawst downloader"
@@ -9,6 +9,8 @@ readme = "README.md"
 edition = "2021"
 default-run = "rawst"
 include = ["src/**/*"]
+categories = ["command-line-utilities", "network-programming", "asynchronous"]
+keywords = ["cli", "async", "http", "network", "download-manager", "downloader"]
 
 [dependencies]
 base64 = "0.22.1"

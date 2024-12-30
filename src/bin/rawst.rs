@@ -1,11 +1,11 @@
-use rawst::cli::args;
-use rawst::cli::args::Arguments;
-use rawst::cli::args::Command;
-use rawst::core::config::Config;
-use rawst::core::engine::{download, resume_download};
-use rawst::core::errors::RawstErr;
-use rawst::core::history;
-use rawst::core::logger;
+use rawst_dl::cli::args;
+use rawst_dl::cli::args::Arguments;
+use rawst_dl::cli::args::Command;
+use rawst_dl::core::config::Config;
+use rawst_dl::core::engine::{download, resume_download};
+use rawst_dl::core::errors::RawstErr;
+use rawst_dl::core::history;
+use rawst_dl::core::logger;
 
 #[tokio::main]
 async fn main() -> Result<(), RawstErr> {
