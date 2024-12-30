@@ -2,7 +2,7 @@ use rawst::cli::args;
 use rawst::cli::args::Arguments;
 use rawst::cli::args::Command;
 use rawst::core::config::Config;
-use rawst::core::downloader;
+use rawst::core::engine::{download, resume_download};
 use rawst::core::errors::RawstErr;
 use rawst::core::history;
 use rawst::core::logger;
@@ -36,8 +36,8 @@ async fn main() -> Result<(), RawstErr> {
 async fn run(config: Config, args: Arguments) -> Result<(), RawstErr> {
     if let Some(cmd) = args.command {
         match cmd {
-            Command::Download(args) => downloader::download(args, config).await?,
-            Command::Resume(args) => downloader::resume_download(args, config).await?,
+            Command::Download(args) => download(args, config).await?,
+            Command::Resume(args) => resume_download(args, config).await?,
             Command::History => history::show_history(config).await?,
         }
     }
