@@ -64,7 +64,11 @@ pub struct DownloadArgs {
     pub iris: Vec<IriString>,
 
     // Outputs
-    /// The path to the downloaded files
+    /// PATH where the files are downloaded along with custom file name
+    /// 
+    /// passing only custom file name without PATH will download the file with custom name in the default download directory
+    /// 
+    /// eg. `foo\bar\custom_name.exe` or `custom_name.exe`
     #[arg(long)]
     pub output_file_path: Vec<PathBuf>,
 }
