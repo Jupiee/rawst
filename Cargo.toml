@@ -10,7 +10,7 @@ edition = "2021"
 default-run = "rawst"
 include = ["src/**/*"]
 categories = ["command-line-utilities", "network-programming", "asynchronous"]
-keywords = ["cli", "async", "http", "network", "download-manager", "downloader"]
+keywords = ["cli", "async", "http", "network", "download-manager"]
 
 [dependencies]
 base64 = "0.22.1"
