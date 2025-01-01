@@ -24,9 +24,16 @@ pub async fn download(args: DownloadArgs, config: Config) -> Result<(), RawstErr
     let engine= Engine::new(config);
 
     if args.input_file.is_some() {
-        engine.process_list_download(args).await
+        let file_path = args.input_file.ok_or(RawstErr::InvalidArgs)?;
+        engine.process_list_download(file_path).await
+
     } else {
-        engine.process_url_download(args).await
+
+        let iri: IriString = args.iris.into_iter().next().ok_or(RawstErr::InvalidArgs)?;
+        let save_as = args.output_file_path.into_iter().next();
+        let threads = args.threads.into();
+
+        engine.process_url_download(iri, save_as, threads).await
     }
 }
 
@@ -70,12 +77,9 @@ impl Engine {
         }
     }
 
-    pub async fn process_url_download(mut self, args: DownloadArgs) -> Result<(), RawstErr> {
-        let iri: IriString = args.iris.into_iter().next().ok_or(RawstErr::InvalidArgs)?;
-    
-        let save_as = args.output_file_path.into_iter().next();
+    pub async fn process_url_download(mut self, iri: IriString, save_as: Option<PathBuf>, threads: usize) -> Result<(), RawstErr> {
         // override the default count in config
-        self.config.threads = args.threads.into();
+        self.config.threads = threads;
 
         let http_task = self.create_http_task(iri, (&save_as).into()).await?;
     
@@ -92,13 +96,9 @@ impl Engine {
         Ok(())
     }
 
-    pub async fn process_list_download(mut self, args: DownloadArgs) -> Result<(), RawstErr> {
+    pub async fn process_list_download(mut self, file_path: PathBuf) -> Result<(), RawstErr> {
         self.config.threads = 1;
         
-        // TODO: move url parsing outside of this function
-        // TODO: this function will accept only vector of urls
-        let file_path = args.input_file.ok_or(RawstErr::InvalidArgs)?;
-    
         let link_string = read_links(&file_path).await?;
     
         let mut task_ids: Vec<String> = Vec::new();
