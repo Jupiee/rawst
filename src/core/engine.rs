@@ -1,4 +1,5 @@
 use std::path::PathBuf;
+use std::collections::HashMap;
 use std::sync::atomic::Ordering;
 
 use futures::stream::{self, StreamExt};
@@ -101,8 +102,7 @@ impl Engine {
         
         let link_string = read_links(&file_path).await?;
     
-        let mut task_ids: Vec<String> = Vec::new();
-        let mut http_tasks: Vec<HttpTask> = Vec::new();
+        let mut tasks: HashMap<String, HttpTask> = HashMap::new();
     
         let url_list = link_string.split("\n").collect::<Vec<&str>>();
         for (index, line) in url_list.iter().enumerate() {
@@ -120,16 +120,19 @@ impl Engine {
                 BASE64_STANDARD.encode(current_time.timestamp().to_be_bytes()) + &index.to_string();
     
             self.history_manager.add_record(&http_task, &self.config, encoded_timestamp_as_id.clone())?;
+
+            tasks.insert(encoded_timestamp_as_id, http_task);
     
-            http_tasks.push(http_task);
-    
-            task_ids.push(encoded_timestamp_as_id);
         }
+
+        println!("{:?}", tasks);
+
+        let val: Vec<HttpTask> = tasks.clone().into_values().collect();
     
-        self.list_http_download(http_tasks).await?;
+        self.list_http_download(val).await?;
     
-        for id in task_ids.iter() {
-            self.history_manager.update_record(id.to_string())?;
+        for id in tasks.keys() {
+            self.history_manager.update_record(id.to_owned())?;
         }
     
         Ok(())
