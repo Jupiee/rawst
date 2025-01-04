@@ -1,7 +1,7 @@
 use rawst_dl::cli::args;
 use rawst_dl::cli::args::Arguments;
 use rawst_dl::cli::args::Command;
-use rawst_dl::core::config::Config;
+use rawst_dl::core::config::{Config, edit_config};
 use rawst_dl::core::engine::{download, resume_download};
 use rawst_dl::core::errors::RawstErr;
 use rawst_dl::core::history;
@@ -39,6 +39,7 @@ async fn run(config: Config, args: Arguments) -> Result<(), RawstErr> {
             Command::Download(args) => download(args, config).await?,
             Command::Resume(args) => resume_download(args, config).await?,
             Command::History => history::show_history(config).await?,
+            Command::Config => edit_config(config).await?,
         }
     }
 

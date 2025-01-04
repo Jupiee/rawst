@@ -31,6 +31,8 @@ pub enum Command {
     Resume(ResumeArgs),
     /// View download history
     History,
+    /// Edit config settings
+    Config,
 }
 
 // Subcommands
