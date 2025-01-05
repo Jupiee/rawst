@@ -125,8 +125,6 @@ impl Engine {
     
         }
 
-        println!("{:?}", tasks);
-
         let val: Vec<HttpTask> = tasks.clone().into_values().collect();
     
         self.list_http_download(val).await?;
