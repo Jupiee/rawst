@@ -87,10 +87,6 @@ pub struct ResumeArgs {
     pub download_ids: Vec<String>,
 }
 
-// History
-#[derive(Args, Debug, PartialEq)]
-pub struct HistoryArgs {}
-
 /// Actual struct handled by clap
 ///
 /// Not really what we want to use directly as it has extra noise,
