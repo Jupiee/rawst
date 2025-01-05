@@ -199,6 +199,9 @@ impl Engine {
         .unwrap()
         .progress_chars("=>_"));
 
+        progressbar.set_position(task.total_downloaded.load(Ordering::SeqCst));
+        progressbar.reset_eta();
+
         match self.config.threads {
             1 => {
                 self.http_handler
