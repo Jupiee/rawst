@@ -12,7 +12,7 @@ use crate::core::config::Config;
 use crate::core::errors::RawstErr;
 use crate::core::http_handler::HttpHandler;
 use crate::core::task::HttpTask;
-use crate::core::utils::{extract_filename_from_header, extract_filename_from_url};
+use crate::core::utils::{extract_filename_from_header, extract_filename_from_url, headers_from_file};
 use crate::core::history::HistoryManager;
 use crate::cli::args::DownloadArgs;
 use crate::cli::args::ResumeArgs;
@@ -24,9 +24,19 @@ pub async fn download(args: DownloadArgs, config: Config) -> Result<(), RawstErr
     log::trace!("Downloading files ({args:?}, {config:?})");
     let engine= Engine::new(config);
 
+    let additional_headers: HashMap<String, String> = if args.headers_file_path.is_some() {
+
+        headers_from_file(args.headers_file_path.unwrap())?
+
+    } else {
+
+        HashMap::new()
+
+    };
+
     if args.input_file.is_some() {
         let file_path = args.input_file.ok_or(RawstErr::InvalidArgs)?;
-        engine.process_list_download(file_path).await
+        engine.process_list_download(file_path, additional_headers).await
 
     } else {
 
@@ -34,7 +44,7 @@ pub async fn download(args: DownloadArgs, config: Config) -> Result<(), RawstErr
         let save_as = args.output_file_path.into_iter().next();
         let threads = args.threads.into();
 
-        engine.process_url_download(iri, save_as, threads).await
+        engine.process_url_download(iri, save_as, threads, additional_headers).await
     }
 }
 
@@ -78,17 +88,17 @@ impl Engine {
         }
     }
 
-    pub async fn process_url_download(mut self, iri: IriString, save_as: Option<PathBuf>, threads: usize) -> Result<(), RawstErr> {
+    pub async fn process_url_download(mut self, iri: IriString, save_as: Option<PathBuf>, threads: usize, additional_headers: HashMap<String, String>) -> Result<(), RawstErr> {
         // override the default count in config
         self.config.threads = threads;
 
-        let http_task = self.create_http_task(iri, (&save_as).into()).await?;
+        let http_task = self.create_http_task(iri, (&save_as).into(), &additional_headers).await?;
     
         let current_time = Local::now();
     
         let encoded_timestamp_as_id = BASE64_STANDARD.encode(current_time.timestamp().to_be_bytes());
     
-        self.history_manager.add_record(&http_task, &self.config, encoded_timestamp_as_id.clone())?;
+        self.history_manager.add_record(&http_task, &self.config, encoded_timestamp_as_id.clone(), additional_headers)?;
     
         self.http_download(http_task).await?;
     
@@ -97,7 +107,7 @@ impl Engine {
         Ok(())
     }
 
-    pub async fn process_list_download(mut self, file_path: PathBuf) -> Result<(), RawstErr> {
+    pub async fn process_list_download(mut self, file_path: PathBuf, additional_headers: HashMap<String, String>) -> Result<(), RawstErr> {
         self.config.threads = 1;
         
         let link_string = read_links(&file_path).await?;
@@ -111,7 +121,7 @@ impl Engine {
                 .parse::<IriString>()
                 .map_err(|_| RawstErr::InvalidArgs)?;
     
-            let http_task = self.create_http_task(iri, None).await?;
+            let http_task = self.create_http_task(iri, None, &additional_headers).await?;
     
             let current_time = Local::now();
     
@@ -119,7 +129,7 @@ impl Engine {
             let encoded_timestamp_as_id =
                 BASE64_STANDARD.encode(current_time.timestamp().to_be_bytes()) + &index.to_string();
     
-            self.history_manager.add_record(&http_task, &self.config, encoded_timestamp_as_id.clone())?;
+            self.history_manager.add_record(&http_task, &self.config, encoded_timestamp_as_id.clone(), additional_headers.clone())?;
 
             tasks.insert(encoded_timestamp_as_id, http_task);
     
@@ -154,7 +164,7 @@ impl Engine {
                     let file_name = PathBuf::from(&data.file_name.file_stem().unwrap());
 
                     let mut http_task = self
-                        .create_http_task(data.iri, Some(&file_name))
+                        .create_http_task(data.iri, Some(&file_name), &data.headers)
                         .await?;
     
                     let cache_sizes =
@@ -241,9 +251,10 @@ impl Engine {
         &mut self,
         iri: IriString,
         save_as: Option<&PathBuf>,
+        additional_headers: &HashMap<String, String>
     ) -> Result<HttpTask, RawstErr> {
         log::trace!("Creating HTTP download task (iri:{iri:?}, save_as:{save_as:?})");
-        let cached_headers = self.http_handler.cache_headers(&iri).await?;
+        let cached_headers = self.http_handler.cache_headers(&iri, additional_headers).await?;
 
         let mut filename = match extract_filename_from_header(&cached_headers) {
             Some(result) => result,
@@ -264,7 +275,7 @@ impl Engine {
             assert!(filename.is_relative());
         }
 
-        let mut task = HttpTask::new(iri, filename, cached_headers);
+        let mut task = HttpTask::new(iri, filename, cached_headers, additional_headers.to_owned());
 
         // checks if the server allows to receive byte ranges for concurrent download
         // otherwise uses single thread

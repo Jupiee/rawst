@@ -73,6 +73,10 @@ pub struct DownloadArgs {
     /// eg. `foo\bar\custom_name.exe` or `custom_name.exe`
     #[arg(long)]
     pub output_file_path: Vec<PathBuf>,
+
+    /// Path to JSON file containing request headers.
+    #[arg(long, default_value=None)]
+    pub headers_file_path: Option<PathBuf>,
 }
 
 fn limit_max_download_threads(s: &str) -> Result<u8, String> {

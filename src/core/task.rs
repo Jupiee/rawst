@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::{
     atomic::{AtomicU64, Ordering},
@@ -44,6 +45,7 @@ pub struct HttpTask {
     pub filename: PathBuf,
     pub total_downloaded: Arc<AtomicU64>,
     pub chunk_data: ChunkType,
+    pub additional_headers: HashMap<String, String>,
 
     // Cached headermap from Head request
     // Efficient for header values retrieval
@@ -65,6 +67,7 @@ impl HttpTask {
         iri: IriString,
         filename: PathBuf,
         cached_headers: HeaderMap,
+        additional_headers: HashMap<String, String>
     ) -> Self {
         assert!(filename.is_relative());
 
@@ -76,6 +79,7 @@ impl HttpTask {
             headers: cached_headers,
             total_downloaded: Arc::new(AtomicU64::new(0)),
             chunk_data,
+            additional_headers,
         }
     }
 

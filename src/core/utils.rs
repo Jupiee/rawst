@@ -1,8 +1,34 @@
+use std::collections::HashMap;
 use std::path::Path;
 use std::path::PathBuf;
+use std::fs;
 
 use iri_string::types::IriString;
+use serde_json::Value;
 use reqwest::header::HeaderMap;
+
+use super::errors::RawstErr;
+
+pub fn headers_from_file(input: PathBuf) -> Result<HashMap<String, String>, RawstErr> {
+
+    let file_content = fs::read_to_string(input).map_err(|err| RawstErr::FileError(err))?;
+    let json: Value = serde_json::from_str(&file_content).map_err(|_| RawstErr::InvalidArgs)?;
+    let mut header_map = HashMap::new();
+
+    // Iterate over the key-value pairs in the JSON object
+    if let Value::Object(map) = json {
+        for (key, value) in map {
+            if let Value::String(value_str) = value {
+                // Convert key and value to HeaderName and HeaderValue, and insert them
+                header_map.insert(key, value_str);
+            }
+        }
+    } else {
+        return Err(RawstErr::InvalidArgs);
+    }
+
+    Ok(header_map)
+}
 
 pub fn extract_filename_from_url(iri: &IriString) -> PathBuf {
     // "http://example.com/path/to/file.tar.gz?query#frag"

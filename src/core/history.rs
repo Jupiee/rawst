@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 
@@ -29,6 +30,7 @@ pub struct Record {
     pub threads_used: usize,
     pub timestamp: String,
     pub status: String,
+    pub headers: HashMap<String, String>
 }
 
 impl Record {
@@ -39,6 +41,7 @@ impl Record {
         file_size: u64,
         file_location: PathBuf,
         threads_used: usize,
+        headers_used: HashMap<String, String>
     ) -> Record {
         let current_time = Local::now();
 
@@ -51,6 +54,7 @@ impl Record {
             threads_used,
             timestamp: current_time.to_string(),
             status: "Pending".to_string(),
+            headers: headers_used,
         }
     }
 }
@@ -64,7 +68,7 @@ impl HistoryManager {
         HistoryManager { file_path }
     }
 
-    pub fn add_record(&self, task: &HttpTask, config: &Config, id: String) -> Result<(), RawstErr> {
+    pub fn add_record(&self, task: &HttpTask, config: &Config, id: String, headers: HashMap<String, String>) -> Result<(), RawstErr> {
         // TODO: Using jsonl would mean we can simply append to the history file.
         let json_str: String = fs::read_to_string(&self.file_path).unwrap_or_else(|_| {
             panic!(
@@ -87,6 +91,7 @@ impl HistoryManager {
             task.content_length(),
             config.download_dir.clone(),
             config.threads,
+            headers,
         );
 
         records.push(new_record);

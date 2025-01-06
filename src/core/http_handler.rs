@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use futures::stream::{self, StreamExt};
 use indicatif::ProgressBar;
 use iri_string::types::IriString;
@@ -30,7 +32,7 @@ impl HttpHandler {
         config: &Config,
     ) -> Result<(), RawstErr> {
         log::trace!("Starting sequential download (task:{task:?}, config:{config:?})");
-        let mut headers = HeaderMap::new();
+        let mut headers: HeaderMap = (&task.additional_headers).try_into().expect("invalid headers");
 
         if let ChunkType::Single(chunk) = &task.chunk_data {
             let range_value = format!("bytes={}-{}", chunk.x_offset, chunk.y_offset);
@@ -63,6 +65,7 @@ impl HttpHandler {
         // Creates a stream iter for downloading each chunk separately
         let download_tasks = stream::iter((0..config.threads).map(|i| {
             let client = &self.client;
+            let mut headers: HeaderMap = (&task.additional_headers).try_into().expect("invalid headers");
 
             // Creates closure for each request and IO operation
             // Each closure has separate IO operation
@@ -74,12 +77,13 @@ impl HttpHandler {
                         ()
                     }
 
+                    let range_value = format!("bytes={}-{}", chunks[i].x_offset, chunks[i].y_offset);
+
+                    headers.insert(RANGE, HeaderValue::from_str(range_value.as_str()).unwrap());
+
                     let response = client
                         .get(to_reqwest_url(&task.iri))
-                        .header(
-                            RANGE,
-                            format!("bytes={}-{}", chunks[i].x_offset, chunks[i].y_offset),
-                        )
+                        .headers(headers)
                         .send()
                         .await
                         .map_err(RawstErr::HttpError)?;
@@ -103,10 +107,14 @@ impl HttpHandler {
         Ok(())
     }
 
-    pub async fn cache_headers(&self, iri: &IriString) -> Result<HeaderMap, RawstErr> {
+    pub async fn cache_headers(&self, iri: &IriString, additional_headers: &HashMap<String, String>) -> Result<HeaderMap, RawstErr> {
+
+        let headermap: HeaderMap = (additional_headers).try_into().expect("invalid headers");
+
         let response = self
             .client
             .head(to_reqwest_url(iri))
+            .headers(headermap)
             .send()
             .await
             .map_err(|_| RawstErr::Unreachable)?;
