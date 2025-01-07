@@ -29,8 +29,8 @@ pub enum Command {
     Download(DownloadArgs),
     /// Resume partial downloads
     Resume(ResumeArgs),
-    /// View download history
-    History,
+    /// Inspect download history
+    History(HistoryArgs),
     /// Edit config settings
     Config,
 }
@@ -89,6 +89,18 @@ pub struct ResumeArgs {
     /// The Downloads to resume
     #[arg(default_value="auto")]
     pub download_ids: Vec<String>,
+}
+
+#[derive(Args, Debug, PartialEq)]
+pub struct HistoryArgs{
+    /// Show the history records of all downloads
+    #[arg(long, action)]
+    pub show: bool,
+    
+    /// Clear all the records in history
+    #[arg(long, action)]
+    pub clear: bool
+
 }
 
 /// Actual struct handled by clap

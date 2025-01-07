@@ -7,12 +7,26 @@ use iri_string::types::IriString;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+use crate::cli::args::HistoryArgs;
 use crate::core::config::Config;
 use crate::core::errors::RawstErr;
 use crate::core::task::HttpTask;
 
-pub async fn show_history(config: Config) -> Result<(), RawstErr> {
-    HistoryManager::new(config.history_file_path).get_history()
+pub async fn check_history_args(args: HistoryArgs, config: Config) -> Result<(), RawstErr> {
+
+    let history_manager = HistoryManager::new(config.history_file_path);
+
+    if args.show {
+        history_manager.get_history()
+
+    } else if args.clear {
+        history_manager.clear_history()
+        
+    } else {
+        Err(RawstErr::InvalidArgs)
+
+    }
+
 }
 
 #[derive(Deserialize, Serialize)]
@@ -120,6 +134,14 @@ impl HistoryManager {
         fs::write(&self.file_path, new_json_str).map_err(RawstErr::FileError)?;
 
         Ok(())
+    }
+
+    pub fn clear_history(&self) -> Result<(), RawstErr> {
+        fs::write(&self.file_path, "[\n\n]").map_err(RawstErr::FileError)?;
+        println!("History cleared!");
+
+        Ok(())
+
     }
 
     pub fn get_history(&self) -> Result<(), RawstErr> {
