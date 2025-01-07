@@ -15,9 +15,9 @@ keywords = ["cli", "async", "http", "network", "download-manager"]
 [dependencies]
 base64 = "0.22.1"
 chrono = "0.4.39"
-clap = { version = "4.5.23", features = ["cargo", "derive"] }
+clap = { version = "4.5.24", features = ["cargo", "derive"] }
 clap-num = "1.1.1"
-clap_complete = "4.5.40"
+clap_complete = "4.5.41"
 concolor-clap = "0.1.0"
 directories = "5.0.1"
 fern = { version = "0.7.1", features = ["chrono", "colored"] }
@@ -28,7 +28,7 @@ iri-string = { version = "0.7.7", features = ["serde"] }
 log = "0.4.22"
 reqwest = {version= "0.12.12", default-features = false, features = ["stream", "rustls-tls"]}
 serde = {version= "1.0.217", features = ["derive"]}
-serde_json = "1.0.134"
+serde_json = "1.0.135"
 tokio = {version= "1.42.0", features = ["full"]}
 toml = "0.8.19"
 
