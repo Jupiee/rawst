@@ -167,8 +167,8 @@ impl HistoryManager {
         }
 
         for record in result.iter() {
-            println!("Record\nid= {:?}\niri= {:?}\nfile name= {:?}\nfile size= {:?}\nfile location= {:?}\nthreads used= {:?}\ntimestamp= {:?}\nstatus= {:?}\n",
-            record.id, record.iri.to_string(), record.file_name, record.file_size, record.file_location, record.threads_used, record.timestamp, record.status);
+            println!("Record\nid: {}\niri: {}\nfile name: {}\nfile size: {:?} bytes\nfile location: {}\nthreads used: {:?}\ntimestamp: {}\nstatus: {}\nheaders: {:?}",
+            record.id, record.iri.to_string(), record.file_name.display(), record.file_size, record.file_location.display(), record.threads_used, record.timestamp, record.status, record.headers);
         }
 
         Ok(())
