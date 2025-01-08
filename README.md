@@ -25,6 +25,14 @@ Snag your files efficiently with Rawst downloader, written in rust for blazingly
 
 ### 📦 **How to install Rawst?**
 <details>
+    <summary>Using cargo</summary>
+
+- Make sure you have rust nightly installed
+- Run `cargo install rawst_dl`
+
+</details>
+
+<details>
     <summary>Linux</summary>
 
 - Download [Linux installer](../../releases/download/0.4.0/linux.sh) from releases and run it
@@ -57,7 +65,8 @@ Usage: rawst [OPTIONS] [IRIS]... [COMMAND]
 Commands:
   download  Download files
   resume    Resume partial downloads
-  history   View download history
+  history   Inspect download history
+  config    Edit config settings
   help      Print this message or the help of the given subcommand(s)
 
 Arguments:
@@ -88,7 +97,14 @@ Options:
           File where to look for download IRIs
 
       --output-file-path <OUTPUT_FILE_PATH>
-          The path to the downloaded files
+          PATH where the files are downloaded along with custom file name
+
+          passing only custom file name without PATH will download the file with custom name in the default download directory
+
+          eg. `foo\bar\custom_name.exe` or `custom_name.exe`
+
+      --headers-file-path <HEADERS_FILE_PATH>
+          Path to JSON file containing request headers
 
       --generate <GENERATOR>
           [possible values: bash, elvish, fish, powershell, zsh]
