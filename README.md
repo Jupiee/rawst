@@ -101,15 +101,17 @@ Options:
 ```
 
 ### **Screenshots**
-<a href="https://ibb.co/x5K9fjz"><img src="https://i.ibb.co/nkqdncQ/Capture.png" alt="Capture" border="0"></a>
-<a href="https://ibb.co/JHmQz5T"><img src="https://i.ibb.co/2dWNjgr/Capture2.png" alt="Capture2" border="0"></a>
+**Download & Resume**
+![WindowsTerminal_bKJ2jlrLXb](https://github.com/user-attachments/assets/5d6edebe-c5dd-437b-aac7-d88f6a44dedd)
+**Multiple url downloads from a file**
+![WindowsTerminal_NzPqW8o1fX](https://github.com/user-attachments/assets/b5948fc8-fbb2-4611-a9dd-a0a7453be3d2)
 
 ### 🎯 **Planned features**
 * [ ] Torrent support
 * [ ] Proxy support
 * [ ] Scheduled downloads
 * [ ] Priority downloads
-* [ ] Custom headers support
+* [x] Custom headers support
 * [x] Resumable downloads
 * [ ] Parallel downloads using cores
 * [x] Download history
