@@ -19,10 +19,17 @@ use crate::cli::args::DownloadArgs;
 use crate::cli::args::ResumeArgs;
 use crate::core::io::{get_cache_sizes, read_links};
 
-pub async fn download(args: DownloadArgs, config: Config) -> Result<(), RawstErr> {
+pub async fn download(args: DownloadArgs, mut config: Config) -> Result<(), RawstErr> {
     // TODO: Fuse url_download and list_download
     // TODO: Support downloading many elements from each source
     log::trace!("Downloading files ({args:?}, {config:?})");
+    // override the default count in config
+    if args.threads.is_some() {
+
+        config.threads = args.threads.unwrap().into();
+
+    }
+
     let engine= Engine::new(config);
 
     let additional_headers: HashMap<String, String> = if args.headers_file_path.is_some() {
@@ -43,9 +50,8 @@ pub async fn download(args: DownloadArgs, config: Config) -> Result<(), RawstErr
 
         let iri: IriString = args.iris.into_iter().next().ok_or(RawstErr::InvalidArgs)?;
         let save_as = args.output_file_path.into_iter().next();
-        let threads = args.threads.into();
 
-        engine.process_url_download(iri, save_as, threads, additional_headers).await
+        engine.process_url_download(iri, save_as, additional_headers).await
     }
 }
 
@@ -89,9 +95,7 @@ impl Engine {
         }
     }
 
-    pub async fn process_url_download(mut self, iri: IriString, save_as: Option<PathBuf>, threads: usize, additional_headers: HashMap<String, String>) -> Result<(), RawstErr> {
-        // override the default count in config
-        self.config.threads = threads;
+    pub async fn process_url_download(mut self, iri: IriString, save_as: Option<PathBuf>, additional_headers: HashMap<String, String>) -> Result<(), RawstErr> {
 
         let http_task = self.create_http_task(iri, (&save_as).into(), &additional_headers).await?;
 

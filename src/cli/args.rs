@@ -50,10 +50,9 @@ pub struct DownloadArgs {
     #[arg(
       short,
       long,
-      default_value_t=MAX_DOWNLOAD_THREADS,
       value_parser=limit_max_download_threads
     )]
-    pub threads: u8,
+    pub threads: Option<u8>,
 
     // Inputs
     // TODO: merge iris arg and input_file arg into one arg
