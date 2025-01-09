@@ -14,7 +14,7 @@ pub async fn edit_config(mut config: Config) -> Result<(), RawstErr> {
     let mut cache_dir = String::new();
     println!("Enter cache directory path: (default: {}) leave blank to keep the default", config.cache_dir.display());
     stdin_handle.read_line(&mut cache_dir).unwrap();
-    cache_dir = cache_dir.replace("\r\n", "");
+    cache_dir = cache_dir.trim().to_string();
 
     if !cache_dir.is_empty() {
 
@@ -26,7 +26,7 @@ pub async fn edit_config(mut config: Config) -> Result<(), RawstErr> {
     let mut log_dir = String::new();
     println!("Enter log directory path: (default: {}) leave blank to keep the default", config.log_dir.display());
     stdin_handle.read_line(&mut log_dir).unwrap();
-    log_dir = log_dir.replace("\r\n", "");
+    log_dir = log_dir.trim().to_string();
 
     if !log_dir.is_empty() {
 
@@ -38,7 +38,7 @@ pub async fn edit_config(mut config: Config) -> Result<(), RawstErr> {
     let mut download_dir = String::new();
     println!("Enter download directory path: (default: {}) leave blank to keep the default", config.download_dir.display());
     stdin_handle.read_line(&mut download_dir).unwrap();
-    download_dir = download_dir.replace("\r\n", "");
+    download_dir = download_dir.trim().to_string();
 
     if !download_dir.is_empty() {
 
@@ -50,7 +50,7 @@ pub async fn edit_config(mut config: Config) -> Result<(), RawstErr> {
     let mut threads = String::new();
     println!("Enter number of threads: (default: {}) leave blank to keep the default", config.threads);
     stdin_handle.read_line(&mut threads).unwrap();
-    threads = threads.replace("\r\n", "");
+    threads = threads.trim().to_string();
 
     if !threads.is_empty() {
 
