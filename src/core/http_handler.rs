@@ -102,7 +102,7 @@ impl HttpHandler {
             .collect::<Vec<_>>()
             .await;
 
-        merge_files(&task.filename, config).await?;
+        merge_files(&task, config).await?;
 
         Ok(())
     }

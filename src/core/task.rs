@@ -7,6 +7,8 @@ use std::sync::{
 
 use iri_string::types::IriString;
 use reqwest::header::HeaderMap;
+use chrono::prelude::{Local, DateTime};
+use sha2::{Sha256, Digest};
 
 #[derive(Clone, Debug)]
 pub struct Chunk {
@@ -46,6 +48,7 @@ pub struct HttpTask {
     pub total_downloaded: Arc<AtomicU64>,
     pub chunk_data: ChunkType,
     pub additional_headers: HashMap<String, String>,
+    pub timestamp: DateTime<Local>,
 
     // Cached headermap from Head request
     // Efficient for header values retrieval
@@ -80,7 +83,20 @@ impl HttpTask {
             total_downloaded: Arc::new(AtomicU64::new(0)),
             chunk_data,
             additional_headers,
+            timestamp: Local::now(),
         }
+    }
+
+    pub fn hashed_file_name(&self) -> String {
+
+        let formatted_string = format!("{}{}", self.iri, self.timestamp.to_string());
+
+        let mut hasher = Sha256::new();
+
+        hasher.update(formatted_string.as_bytes());
+
+        format!("{:x}", hasher.finalize())
+
     }
 
     pub fn allocate_chunks(&mut self, number_of_chunks: usize) {

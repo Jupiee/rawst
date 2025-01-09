@@ -1,12 +1,13 @@
 use std::path::PathBuf;
 use std::collections::HashMap;
 use std::sync::atomic::Ordering;
+use std::str::FromStr;
 
+use chrono::DateTime;
 use futures::stream::{self, StreamExt};
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use iri_string::types::IriString;
 use base64::{prelude::BASE64_STANDARD, Engine as Base64Engine};
-use chrono::prelude::Local;
 
 use crate::core::config::Config;
 use crate::core::errors::RawstErr;
@@ -93,12 +94,10 @@ impl Engine {
         self.config.threads = threads;
 
         let http_task = self.create_http_task(iri, (&save_as).into(), &additional_headers).await?;
+
+        let encoded_timestamp_as_id = BASE64_STANDARD.encode(http_task.timestamp.timestamp().to_be_bytes());
     
-        let current_time = Local::now();
-    
-        let encoded_timestamp_as_id = BASE64_STANDARD.encode(current_time.timestamp().to_be_bytes());
-    
-        self.history_manager.add_record(&http_task, &self.config, encoded_timestamp_as_id.clone(), additional_headers)?;
+        self.history_manager.add_record(&http_task, &self.config, encoded_timestamp_as_id.clone())?;
     
         self.http_download(http_task).await?;
     
@@ -123,13 +122,11 @@ impl Engine {
     
             let http_task = self.create_http_task(iri, None, &additional_headers).await?;
     
-            let current_time = Local::now();
-    
             // Adding index number to distinguish between each id of each task
             let encoded_timestamp_as_id =
-                BASE64_STANDARD.encode(current_time.timestamp().to_be_bytes()) + &index.to_string();
+                BASE64_STANDARD.encode(http_task.timestamp.timestamp().to_be_bytes()) + &index.to_string();
     
-            self.history_manager.add_record(&http_task, &self.config, encoded_timestamp_as_id.clone(), additional_headers.clone())?;
+            self.history_manager.add_record(&http_task, &self.config, encoded_timestamp_as_id.clone())?;
 
             tasks.insert(encoded_timestamp_as_id, http_task);
     
@@ -164,11 +161,13 @@ impl Engine {
                     let file_name = PathBuf::from(&data.file_name.file_stem().unwrap());
 
                     let mut http_task = self
-                        .create_http_task(data.iri, Some(&file_name), &data.headers)
+                        .create_http_task(data.iri.clone(), Some(&file_name), &data.headers)
                         .await?;
+
+                    http_task.timestamp = DateTime::from_str(data.timestamp.as_str()).unwrap();
     
                     let cache_sizes =
-                        get_cache_sizes(&data.file_name, data.threads_used, self.config.clone())?;
+                        get_cache_sizes(http_task.hashed_file_name(), data.threads_used, self.config.clone())?;
     
                     http_task.calculate_x_offsets(&cache_sizes);
     

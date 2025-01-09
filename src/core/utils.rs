@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::path::Path;
 use std::path::PathBuf;
 use std::fs;
 
@@ -7,7 +6,7 @@ use iri_string::types::IriString;
 use serde_json::Value;
 use reqwest::header::HeaderMap;
 
-use super::errors::RawstErr;
+use crate::core::errors::RawstErr;
 
 pub fn headers_from_file(input: PathBuf) -> Result<HashMap<String, String>, RawstErr> {
 
@@ -70,6 +69,8 @@ pub fn extract_filename_from_header(headers: &HeaderMap) -> Option<PathBuf> {
     }
 }
 
-pub fn chunk_file_name(filename: &Path, part: usize) -> PathBuf {
-    filename.with_added_extension(format!("part-{}.tmp", part))
+pub fn chunk_file_name(hashed_filename: String, part: usize) -> PathBuf {
+
+    PathBuf::from(hashed_filename).with_added_extension(format!("part{}", part))
+
 }

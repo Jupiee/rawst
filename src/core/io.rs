@@ -5,7 +5,7 @@ use std::sync::atomic::Ordering;
 use futures::{future::join_all, stream::StreamExt};
 use indicatif::ProgressBar;
 use reqwest::Response;
-use tokio::fs::{remove_file, File};
+use tokio::fs::{remove_file, rename, File};
 use tokio::io::{AsyncReadExt, AsyncWriteExt, BufReader, BufWriter};
 
 use crate::core::config::Config;
@@ -13,8 +13,8 @@ use crate::core::errors::RawstErr;
 use crate::core::task::{ChunkType, HttpTask};
 use crate::core::utils::chunk_file_name;
 
-pub async fn merge_files(filename: &PathBuf, config: &Config) -> Result<(), RawstErr> {
-    let output_path = config.download_dir.join(filename);
+pub async fn merge_files(task: &HttpTask, config: &Config) -> Result<(), RawstErr> {
+    let output_path = config.download_dir.join(&task.filename);
 
     let output_file = File::create(output_path)
         .await
@@ -26,7 +26,7 @@ pub async fn merge_files(filename: &PathBuf, config: &Config) -> Result<(), Raws
 
     // Creates a closure for each temporary file read operation
     (0..config.threads).for_each(|i| {
-        let chunk_filename = chunk_file_name(filename, i);
+        let chunk_filename = chunk_file_name(task.hashed_file_name(), i);
         assert!(chunk_filename.is_relative());
         let chunk_path = config.cache_dir.join(chunk_filename);
 
@@ -70,12 +70,13 @@ pub async fn create_file(
     pb: &ProgressBar,
     base_path: &Path,
 ) -> Result<(), RawstErr> {
-    let file_path = base_path.join(task.filename.clone());
+    let hashed_file_name = chunk_file_name(task.hashed_file_name(), 1);
+    let file_path = base_path.join(hashed_file_name);
 
     let mut file = File::options()
         .append(true)
         .create(true)
-        .open(file_path)
+        .open(&file_path)
         .await
         .map_err(RawstErr::FileError)?;
 
@@ -94,6 +95,9 @@ pub async fn create_file(
         pb.set_position(task.total_downloaded.load(Ordering::SeqCst));
     }
 
+    let renamed_file_path = base_path.join(&task.filename);
+    rename(file_path, renamed_file_path).await.map_err(|err| RawstErr::FileError(err))?;
+
     Ok(())
 }
 
@@ -106,7 +110,7 @@ pub async fn create_cache(
 ) -> Result<(), RawstErr> {
     if let ChunkType::Multiple(chunks) = &task.chunk_data {
 
-        let chunk_file_name = chunk_file_name(&task.filename, chunk_number);
+        let chunk_file_name = chunk_file_name(task.hashed_file_name(),chunk_number);
         assert!(chunk_file_name.is_relative());
         assert!(base_path.is_dir());
 
@@ -146,7 +150,7 @@ pub async fn create_cache(
 }
 
 pub fn get_cache_sizes(
-    filename: &PathBuf,
+    hashed_filename: String,
     threads: usize,
     config: Config,
 ) -> Result<Vec<u64>, RawstErr> {
@@ -154,7 +158,9 @@ pub fn get_cache_sizes(
 
     match threads > 1 {
         false => {
-            let path = config.download_dir.join(filename);
+            let file_name = chunk_file_name(hashed_filename, 1);
+
+            let path = config.download_dir.join(file_name);
 
             let meta_data = std::fs::metadata(path).map_err(|err| RawstErr::FileError(err))?;
 
@@ -162,7 +168,7 @@ pub fn get_cache_sizes(
         }
         true => {
             (0..threads).try_for_each(|i| {
-                let chunk_filename = chunk_file_name(filename, i);
+                let chunk_filename = chunk_file_name(hashed_filename.clone(), i);
 
                 let path = config.cache_dir.join(chunk_filename);
 
