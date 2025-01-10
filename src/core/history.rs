@@ -118,7 +118,7 @@ impl HistoryManager {
     }
 
     pub fn update_record(&self, id: String) -> Result<(), RawstErr> {
-        let json_str = fs::read_to_string(&self.file_path).unwrap();
+        let json_str = fs::read_to_string(&self.file_path).map_err(|err| RawstErr::FileError(err))?;
 
         let mut records: Vec<Record> =
             serde_json::from_str(&json_str).expect("There are no downloads");
@@ -145,7 +145,7 @@ impl HistoryManager {
     }
 
     pub fn get_history(&self) -> Result<(), RawstErr> {
-        let json_str = fs::read_to_string(&self.file_path).unwrap();
+        let json_str = fs::read_to_string(&self.file_path).map_err(|err| RawstErr::FileError(err))?;
 
         let value: Value = serde_json::from_str(&json_str).expect("There are no downloads");
 
@@ -175,7 +175,7 @@ impl HistoryManager {
     }
 
     pub fn get_recent_pending(&self) -> Result<Option<Record>, RawstErr> {
-        let json_str = fs::read_to_string(&self.file_path).unwrap();
+        let json_str = fs::read_to_string(&self.file_path).map_err(|err| RawstErr::FileError(err))?;
 
         let records: Vec<Record> = serde_json::from_str(&json_str).expect("There are no downloads");
 
@@ -189,7 +189,7 @@ impl HistoryManager {
     }
 
     pub fn get_record(&self, id: &String) -> Result<Option<Record>, RawstErr> {
-        let json_str = fs::read_to_string(&self.file_path).unwrap();
+        let json_str = fs::read_to_string(&self.file_path).map_err(|err| RawstErr::FileError(err))?;
 
         let records: Vec<Record> = serde_json::from_str(&json_str).expect("There are no downloads");
 
