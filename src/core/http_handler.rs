@@ -5,7 +5,7 @@ use indicatif::ProgressBar;
 use iri_string::types::IriString;
 use reqwest::{
     header::{HeaderMap, HeaderValue, RANGE},
-    Client, StatusCode,
+    Client, StatusCode, ClientBuilder,
 };
 
 use crate::core::config::Config;
@@ -20,8 +20,10 @@ pub struct HttpHandler {
 
 impl HttpHandler {
     pub fn new() -> Self {
+        let client = ClientBuilder::new().cookie_store(true).build().unwrap();
+
         Self {
-            client: Client::new(),
+            client,
         }
     }
 
