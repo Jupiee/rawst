@@ -10,7 +10,7 @@ use crate::core::errors::RawstErr;
 
 pub fn headers_from_file(input: PathBuf) -> Result<HashMap<String, String>, RawstErr> {
 
-    let file_content = fs::read_to_string(input).map_err(|err| RawstErr::FileError(err))?;
+    let file_content = fs::read_to_string(input).map_err(RawstErr::FileError)?;
     let json: Value = serde_json::from_str(&file_content).map_err(|_| RawstErr::InvalidArgs)?;
     let mut header_map = HashMap::new();
 

@@ -96,7 +96,7 @@ pub async fn create_file(
     }
 
     let renamed_file_path = base_path.join(&task.filename);
-    rename(file_path, renamed_file_path).await.map_err(|err| RawstErr::FileError(err))?;
+    rename(file_path, renamed_file_path).await.map_err(RawstErr::FileError)?;
 
     Ok(())
 }
@@ -162,7 +162,7 @@ pub fn get_cache_sizes(
 
             let path = config.download_dir.join(file_name);
 
-            let meta_data = std::fs::metadata(path).map_err(|err| RawstErr::FileError(err))?;
+            let meta_data = std::fs::metadata(path).map_err(RawstErr::FileError)?;
 
             cache_sizes.push(meta_data.len());
         }
@@ -172,7 +172,7 @@ pub fn get_cache_sizes(
 
                 let path = config.cache_dir.join(chunk_filename);
 
-                let meta_data = std::fs::metadata(path).map_err(|err| RawstErr::FileError(err))?;
+                let meta_data = std::fs::metadata(path).map_err(RawstErr::FileError)?;
 
                 cache_sizes.push(meta_data.len());
                 Ok::<_, RawstErr>(())
