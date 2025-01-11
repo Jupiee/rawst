@@ -89,7 +89,9 @@ impl HttpTask {
 
     pub fn hashed_file_name(&self) -> String {
 
-        let formatted_string = format!("{}{}", self.iri, self.timestamp.to_string());
+        let formatted_string = format!("{}{}", self.iri, self.timestamp);
+
+        println!("{}", formatted_string);
 
         let mut hasher = Sha256::new();
 
