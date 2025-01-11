@@ -76,7 +76,7 @@ impl HttpHandler {
 
                     if chunks[i].is_downloaded() {
                         log::trace!("Chunk number {i:?} skipped: {:?}", chunks[i]);
-                        ()
+                        return Ok(())
                     }
 
                     let range_value = format!("bytes={}-{}", chunks[i].x_offset, chunks[i].y_offset);
@@ -104,7 +104,7 @@ impl HttpHandler {
             .collect::<Vec<_>>()
             .await;
 
-        merge_files(&task, config).await?;
+        merge_files(task, config).await?;
 
         Ok(())
     }
