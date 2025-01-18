@@ -19,13 +19,13 @@ clap = { version = "4.5.26", features = ["cargo", "derive"] }
 clap-num = "1.1.1"
 clap_complete = "4.5.42"
 concolor-clap = "0.1.0"
-directories = "5.0.1"
+directories = "6.0.0"
 fern = { version = "0.7.1", features = ["chrono", "colored"] }
 futures = "0.3.31"
 humantime = "2.1.0"
 indicatif = "0.17.9"
 iri-string = { version = "0.7.7", features = ["serde"] }
-log = "0.4.22"
+log = "0.4.25"
 reqwest = {version= "0.12.12", default-features = false, features = ["stream", "rustls-tls", "cookies"]}
 serde = {version= "1.0.217", features = ["derive"]}
 serde_json = "1.0.135"
