@@ -91,8 +91,6 @@ impl HttpTask {
 
         let formatted_string = format!("{}{}", self.iri, self.timestamp);
 
-        println!("{}", formatted_string);
-
         let mut hasher = Sha256::new();
 
         hasher.update(formatted_string.as_bytes());
