@@ -15,6 +15,7 @@ use crate::core::http_handler::HttpHandler;
 use crate::core::task::HttpTask;
 use crate::core::utils::{extract_filename_from_header, extract_filename_from_url, headers_from_file};
 use crate::core::history::HistoryManager;
+use crate::cli::args::InputSource;
 use crate::cli::args::DownloadArgs;
 use crate::cli::args::ResumeArgs;
 use crate::core::io::{get_cache_sizes, read_links};
@@ -42,7 +43,30 @@ pub async fn download(args: DownloadArgs, mut config: Config) -> Result<(), Raws
 
     };
 
-    if args.input_file.is_some() {
+    if let Some(input) = args.input {
+
+        match input {
+
+            InputSource::File(file_path) => engine.process_list_download(file_path, additional_headers).await?,
+            InputSource::Iris(list_of_iris) => {
+                let iri: IriString = list_of_iris.into_iter().next().ok_or(RawstErr::InvalidArgs)?;
+                let save_as = args.output_file_path.into_iter().next();
+
+                engine.process_url_download(iri, save_as, additional_headers).await?
+
+            }
+
+        }
+
+        Ok(())
+
+    } else {
+
+        Err(RawstErr::InvalidArgs)
+
+    }
+
+    /*if args.input_file.is_some() {
         let file_path = args.input_file.ok_or(RawstErr::InvalidArgs)?;
         engine.process_list_download(file_path, additional_headers).await
 
@@ -52,7 +76,7 @@ pub async fn download(args: DownloadArgs, mut config: Config) -> Result<(), Raws
         let save_as = args.output_file_path.into_iter().next();
 
         engine.process_url_download(iri, save_as, additional_headers).await
-    }
+    }*/
 }
 
 pub async fn resume_download(args: ResumeArgs, config: Config) -> Result<(),RawstErr> {

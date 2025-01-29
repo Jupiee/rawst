@@ -11,6 +11,28 @@ use clap_complete::Generator;
 use clap_complete::Shell;
 use clap_num::number_range;
 
+#[derive(Debug, PartialEq, Clone)]
+pub enum InputSource {
+    File(PathBuf),
+    Iris(Vec<IriString>)
+
+}
+
+fn parse_input_source(s: &str) -> Result<InputSource, String> {
+
+    if s.ends_with(".txt") {
+        Ok(InputSource::File(PathBuf::from(s)))
+
+    } else {
+        let iris = s.split(',')
+            .map(|s| IriString::try_from(s).map_err(|e| e.to_string()))
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(InputSource::Iris(iris))
+
+    }
+
+}
+
 // Commands
 // ========
 
@@ -55,14 +77,11 @@ pub struct DownloadArgs {
     pub threads: Option<u8>,
 
     // Inputs
-    // TODO: merge iris arg and input_file arg into one arg
-    /// File where to look for download IRIs
-    #[arg(short, long, default_value=None)]
-    pub input_file: Option<PathBuf>,
-
-    /// The IRIs to download
-    #[arg()]
-    pub iris: Vec<IriString>,
+    /// The input source to download from
+    /// 
+    /// URL and text file path that contains URLS could be used
+    #[arg(value_parser=parse_input_source, default_value=None)]
+    pub input: Option<InputSource>,
 
     // Outputs
     /// PATH where the files are downloaded along with custom file name
