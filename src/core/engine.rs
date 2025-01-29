@@ -66,17 +66,6 @@ pub async fn download(args: DownloadArgs, mut config: Config) -> Result<(), Raws
 
     }
 
-    /*if args.input_file.is_some() {
-        let file_path = args.input_file.ok_or(RawstErr::InvalidArgs)?;
-        engine.process_list_download(file_path, additional_headers).await
-
-    } else {
-
-        let iri: IriString = args.iris.into_iter().next().ok_or(RawstErr::InvalidArgs)?;
-        let save_as = args.output_file_path.into_iter().next();
-
-        engine.process_url_download(iri, save_as, additional_headers).await
-    }*/
 }
 
 pub async fn resume_download(args: ResumeArgs, config: Config) -> Result<(),RawstErr> {
