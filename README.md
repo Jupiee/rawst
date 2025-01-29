@@ -60,7 +60,7 @@ Snag your files efficiently with Rawst downloader, written in rust for blazingly
 
 ### ⚙️ **Usage**
 ```
-Usage: rawst [OPTIONS] [IRIS]... [COMMAND]
+Usage: rawst [OPTIONS] <INPUT> [COMMAND]
 
 Commands:
   download  Download files
@@ -70,8 +70,8 @@ Commands:
   help      Print this message or the help of the given subcommand(s)
 
 Arguments:
-  [IRIS]...
-          The IRIs to download
+  <INPUT>
+          The input source to download from
 
 Options:
   -v, --verbosity <VERBOSITY>
@@ -90,11 +90,6 @@ Options:
           Maximum amount of threads used to download
 
           Limited to 8 threads to avoid throttling
-
-          [default: 8]
-
-  -i, --input-file <INPUT_FILE>
-          File where to look for download IRIs
 
       --output-file-path <OUTPUT_FILE_PATH>
           PATH where the files are downloaded along with custom file name
