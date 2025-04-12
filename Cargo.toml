@@ -1,6 +1,6 @@
 [package]
 name = "rawst_dl"
-version = "0.8.0"
+version = "0.8.1"
 authors = ["Faseeh Shahzad"]
 description = "Snag your files efficiently with Rawst downloader"
 repository = "https://github.com/Jupiee/rawst"
