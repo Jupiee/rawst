@@ -41,12 +41,15 @@ fn parse_input_source(s: &str) -> Result<InputSource, String> {
 //       the implementation details shouldn't be leaked.
 /// The Rawst command.
 ///
+/// - Server
 /// - Download
 /// - Resume
 /// - History
 #[derive(Subcommand, Debug, PartialEq)]
 #[command(name = "rawst-subcommand")]
 pub enum Command {
+    /// Start the server
+    Server(ServerOptions),
     /// Download files
     Download(DownloadArgs),
     /// Resume partial downloads
@@ -59,6 +62,14 @@ pub enum Command {
 
 // Subcommands
 // -----------
+
+// Server
+#[derive(Args, Debug, PartialEq)]
+pub struct ServerOptions {
+    #[arg(long, default_value="127.0.0.1:50051")]
+    pub server_address: String,
+
+}
 
 // Download
 const MAX_DOWNLOAD_THREADS: u8 = 8;

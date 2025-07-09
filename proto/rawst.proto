@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package rawstproto;
+
+message DownloadArgs {
+    optional uint32 threads = 1;
+    optional string input = 2;
+    repeated string output_file_path = 3;
+    optional string headers_file_path = 4;
+}
+
+message Request {
+    DownloadArgs download_args = 1;
+
+    string color = 2;
+    optional string log_verbosity = 3;
+    optional string verbosity = 4;
+}
+
+message Response {
+    string output = 1;
+}
+
+service RawstDownload {
+    rpc Send(Request) returns (Response);
+}
