@@ -22,9 +22,9 @@ jobs:
     - uses: actions/checkout@v4
     - uses: cachix/install-nix-action@v30
     - uses: cachix/cachix-action@v15
-    - uses: arduino/setup-protoc@v3
       with:
         name: devenv
+    - uses: arduino/setup-protoc@v3
     - name: Install devenv.sh
       run: nix profile install nixpkgs#devenv
 
