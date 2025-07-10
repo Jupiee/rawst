@@ -168,6 +168,97 @@ pub struct Arguments {
     generator: Option<Shell>,
 }
 
+impl Arguments {
+
+    pub fn to_primitive_types(self) -> (CommandArgs, String, Option<String>, Option<String>, String) {
+
+        let command_type: String;
+
+        let command_args = match self.command {
+            Some(Command::Download(download_args)) => {
+                
+                let threads = match download_args.threads {
+                    Some(number) => Some(number as u32),
+                    None => None
+                };
+
+                let string_url = match download_args.input {
+                    Some(InputSource::File(file_pathbuf)) => Some(file_pathbuf.to_string_lossy().into_owned()) ,
+                    Some(InputSource::Iris(vec_iri)) => Some(vec_iri.into_iter().next().unwrap().as_str().to_string()),
+                    _ => None
+                };
+
+                let vec_output_pathbuf = download_args.output_file_path.into_iter().map(|i| i.to_string_lossy().into_owned()).collect::<Vec<String>>();
+                let header_file_path = match download_args.headers_file_path {
+                    Some(file_path) => Some(file_path.to_string_lossy().into_owned()),
+                    None => None
+                };
+
+                command_type = "Download".to_string();
+
+                CommandArgs::Download((threads, string_url, vec_output_pathbuf, header_file_path))
+
+            },
+            Some(Command::Resume(resume_args)) => {
+                command_type = "Resume".to_string();
+                CommandArgs::Resume(resume_args.download_ids)
+
+            },
+            Some(Command::History(history_args)) => {
+                command_type = "History".to_string();
+                CommandArgs::History((history_args.show, history_args.clear))
+
+            },
+            _ => {
+                command_type = "Download".to_string();
+                CommandArgs::Download((Some(0 as u32),Some("".to_owned()), vec!["".to_owned()], Some("".to_owned())))
+
+            }
+
+        };
+
+        let color = match self.color.color {
+
+            concolor_clap::ColorChoice::Auto => "Auto".to_owned(),
+            concolor_clap::ColorChoice::Always => "Always".to_owned(),
+            concolor_clap::ColorChoice::Never => "Never".to_owned(),
+
+        };
+        let verbosity = match self.verbosity {
+            Some(log::LevelFilter::Off) => Some("Off".to_owned()),
+            Some(log::LevelFilter::Debug) => Some("Debug".to_owned()),
+            Some(log::LevelFilter::Error) => Some("Error".to_owned()),
+            Some(log::LevelFilter::Info) => Some("Info".to_owned()),
+            Some(log::LevelFilter::Trace) => Some("Trace".to_owned()),
+            Some(log::LevelFilter::Warn) => Some("Warn".to_owned()),
+            None => None
+
+        };
+
+        let log_verbosity = match self.log_verbosity {
+            Some(log::LevelFilter::Off) => Some("Off".to_owned()),
+            Some(log::LevelFilter::Debug) => Some("Debug".to_owned()),
+            Some(log::LevelFilter::Error) => Some("Error".to_owned()),
+            Some(log::LevelFilter::Info) => Some("Info".to_owned()),
+            Some(log::LevelFilter::Trace) => Some("Trace".to_owned()),
+            Some(log::LevelFilter::Warn) => Some("Warn".to_owned()),
+            None => None
+
+        };
+
+        (command_args, color, verbosity, log_verbosity, command_type)
+
+    }
+
+}
+
+pub enum CommandArgs {
+    Download((Option<u32>, Option<String>, Vec<String>, Option<String>)),
+    Resume(Vec<String>),
+    History((bool, bool))
+
+}
+
 fn generate_completion_script<G: Generator>(gen: G, cmd: &mut clap::Command) {
     let cmd_name = cmd.get_name().to_string();
     let base_dirs = BaseDirs::new().unwrap();

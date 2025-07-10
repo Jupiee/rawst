@@ -21,18 +21,19 @@ impl RawstDownload for RawstService {
         ) -> Result<Response<ProtoResponse>, Status> {
             let arguments = request.into_inner();
 
-            println!("{:?}", arguments);
+            //println!("{:?}", arguments);
+            let display = format!("{:?}", arguments);
 
             Ok(Response::new(
                 ProtoResponse {
-                    output: String::from_utf8(vec![240, 159, 146, 150]).unwrap()
+                    output: display
                 }
             ))
 
         }
 }
 
-pub async fn start_server(opts: ServerOptions) -> Result<(), RawstErr> {
+pub async fn start_server(opts: &ServerOptions) -> Result<(), RawstErr> {
     let address = opts.server_address.parse().unwrap();
     let service = RawstService::default();
 

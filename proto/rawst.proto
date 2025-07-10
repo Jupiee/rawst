@@ -9,12 +9,27 @@ message DownloadArgs {
     optional string headers_file_path = 4;
 }
 
-message Request {
-    DownloadArgs download_args = 1;
+message ResumeArgs {
+    repeated string download_ids = 1;
+}
 
-    string color = 2;
-    optional string log_verbosity = 3;
-    optional string verbosity = 4;
+message HistoryArgs {
+    bool show = 1;
+    bool clear = 2;
+}
+
+message Request {
+    string argument_type = 1;
+
+    oneof command_args {
+        DownloadArgs download_args = 2;
+        ResumeArgs resume_args = 3;
+        HistoryArgs history_args = 4;
+    };
+
+    string color = 5;
+    optional string log_verbosity = 6;
+    optional string verbosity = 7;
 }
 
 message Response {
