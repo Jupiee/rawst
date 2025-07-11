@@ -11,6 +11,13 @@ use clap_complete::Generator;
 use clap_complete::Shell;
 use clap_num::number_range;
 
+pub mod rawstcli_proto {
+    tonic::include_proto!("rawstproto");
+}
+
+use rawstcli_proto::rawst_download_client::RawstDownloadClient;
+use rawstcli_proto::{DownloadArgs as ProtoDownloadArgs, ResumeArgs as ProtoResumeArgs, HistoryArgs as ProtoHistoryArgs, Request as ProtoRequest, request::CommandArgs as ProtoCommandArgs};
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum InputSource {
     File(PathBuf),
@@ -170,7 +177,7 @@ pub struct Arguments {
 
 impl Arguments {
 
-    pub fn to_primitive_types(self) -> (CommandArgs, String, Option<String>, Option<String>, String) {
+    pub fn to_primitive_types(self) -> ProtoRequest {
 
         let command_type: String;
 
@@ -196,22 +203,47 @@ impl Arguments {
 
                 command_type = "Download".to_string();
 
-                CommandArgs::Download((threads, string_url, vec_output_pathbuf, header_file_path))
+                ProtoCommandArgs::DownloadArgs(
+                    ProtoDownloadArgs {
+                        threads,
+                        input: string_url,
+                        output_file_path: vec_output_pathbuf,
+                        headers_file_path: header_file_path
+                    }
+                )
 
             },
             Some(Command::Resume(resume_args)) => {
                 command_type = "Resume".to_string();
-                CommandArgs::Resume(resume_args.download_ids)
+
+                ProtoCommandArgs::ResumeArgs(
+                    ProtoResumeArgs {
+                        download_ids: resume_args.download_ids
+                    }
+                )
 
             },
             Some(Command::History(history_args)) => {
                 command_type = "History".to_string();
-                CommandArgs::History((history_args.show, history_args.clear))
+
+                ProtoCommandArgs::HistoryArgs(
+                    ProtoHistoryArgs {
+                        show: history_args.show,
+                        clear: history_args.clear,
+                    }
+                )
 
             },
             _ => {
                 command_type = "Download".to_string();
-                CommandArgs::Download((Some(0 as u32),Some("".to_owned()), vec!["".to_owned()], Some("".to_owned())))
+                ProtoCommandArgs::DownloadArgs(
+                    ProtoDownloadArgs {
+                        threads: Some(0 as u32),
+                        input: Some("".to_owned()),
+                        output_file_path: vec!["".to_owned()],
+                        headers_file_path: Some("".to_owned())
+                    }
+                )
 
             }
 
@@ -246,16 +278,15 @@ impl Arguments {
 
         };
 
-        (command_args, color, verbosity, log_verbosity, command_type)
+        ProtoRequest {
+            argument_type: command_type,
+            command_args: Some(command_args),
+            color,
+            log_verbosity,
+            verbosity
+        }
 
     }
-
-}
-
-pub enum CommandArgs {
-    Download((Option<u32>, Option<String>, Vec<String>, Option<String>)),
-    Resume(Vec<String>),
-    History((bool, bool))
 
 }
 
