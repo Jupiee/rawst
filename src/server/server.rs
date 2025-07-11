@@ -1,14 +1,10 @@
 use tonic::{transport::Server, Request, Response, Status};
 
-use crate::cli::args::ServerOptions;
+use crate::cli::args::{ServerOptions, Arguments};
 use crate::core::errors::RawstErr;
 
-pub mod rawstcli_proto {
-    tonic::include_proto!("rawstproto");
-}
-
-use rawstcli_proto::rawst_download_server::{RawstDownload, RawstDownloadServer};
-use rawstcli_proto::{Request as ProtoRequest, Response as ProtoResponse, DownloadArgs as ProtoDownloadArgs};
+use crate::cli::args::rawstcli_proto::rawst_download_server::{RawstDownload, RawstDownloadServer};
+use crate::cli::args::rawstcli_proto::{Request as ProtoRequest, Response as ProtoResponse, DownloadArgs as ProtoDownloadArgs};
 
 #[derive(Default)]
 pub struct RawstService {}
@@ -21,8 +17,10 @@ impl RawstDownload for RawstService {
         ) -> Result<Response<ProtoResponse>, Status> {
             let arguments = request.into_inner();
 
+            let converted = Arguments::from_primitive_types(arguments);
+
             //println!("{:?}", arguments);
-            let display = format!("{:?}", arguments);
+            let display = format!("{:?}", converted);
 
             Ok(Response::new(
                 ProtoResponse {

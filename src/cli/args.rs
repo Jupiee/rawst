@@ -177,6 +177,156 @@ pub struct Arguments {
 
 impl Arguments {
 
+    pub fn from_primitive_types(proto: ProtoRequest) -> Self {
+        let command_args = if let Some(proto_cmd_args) = proto.command_args {
+            match proto_cmd_args {
+                ProtoCommandArgs::DownloadArgs(args) => {
+
+                    let threads = match args.threads {
+                        Some(num_of_threads) => Some(num_of_threads as u8),
+                        None => None
+                    };
+
+                    let input = match args.input {
+                        Some(url) => Some(InputSource::File(PathBuf::from(url))),
+                        None => None
+
+                    };
+
+                    let output_file_path = args.output_file_path.into_iter().map(|i| PathBuf::from(i)).collect::<Vec<PathBuf>>();
+
+                    let headers_file_path = match args.headers_file_path {
+                        Some(file_path_string) => Some(PathBuf::from(file_path_string)),
+                        None => None
+
+                    };
+
+                    Some(Command::Download(
+                        DownloadArgs {
+                            threads,
+                            input,
+                            output_file_path,
+                            headers_file_path
+                        }
+                    ))
+
+                },
+                ProtoCommandArgs::ResumeArgs(args) => {
+                    Some(Command::Resume(
+                        ResumeArgs {
+                            download_ids: args.download_ids
+                        }
+                    ))
+
+                },
+                ProtoCommandArgs::HistoryArgs(args) => {
+                    Some(Command::History(
+                        HistoryArgs {
+                            show: args.show,
+                            clear: args.clear
+                        }
+                    ))
+
+                }
+                
+            }
+
+        } else {
+            None
+
+        };
+
+        let auto = "Auto".to_owned();
+        let always = "Always".to_owned();
+
+        let color_choice = if proto.color == auto {
+            concolor_clap::ColorChoice::Auto
+            
+        } else if proto.color == always {
+            concolor_clap::ColorChoice::Always
+
+        } else {
+            concolor_clap::ColorChoice::Never
+
+        };
+
+        let color = concolor_clap::Color {
+            color: color_choice
+        };
+
+        let off =  "Off".to_owned();
+        let debug = "Debug".to_owned();
+        let error = "Error".to_owned();
+        let info = "Info".to_owned();
+        let trace = "Trace".to_owned();
+
+        let verbosity = match proto.verbosity {
+            Some(level) => {
+
+                if level == off {
+                    Some(log::LevelFilter::Off)
+
+                } else if level == debug {
+                    Some(log::LevelFilter::Debug)
+
+                } else if level == error {
+                    Some(log::LevelFilter::Error)
+
+                } else if level == info {
+                    Some(log::LevelFilter::Info)
+
+                } else if level == trace {
+                    Some(log::LevelFilter::Trace)
+
+                } else {
+                    Some(log::LevelFilter::Warn)
+
+                }
+
+            },
+            None => None
+
+        };
+
+        let log_verbosity = match proto.log_verbosity {
+            Some(level) => {
+
+                if level == off {
+                    Some(log::LevelFilter::Off)
+
+                } else if level == debug {
+                    Some(log::LevelFilter::Debug)
+
+                } else if level == error {
+                    Some(log::LevelFilter::Error)
+
+                } else if level == info {
+                    Some(log::LevelFilter::Info)
+
+                } else if level == trace {
+                    Some(log::LevelFilter::Trace)
+
+                } else {
+                    Some(log::LevelFilter::Warn)
+
+                }
+
+            },
+            None => None
+
+        };
+
+        Arguments {
+            command: command_args,
+            verbosity,
+            log_verbosity,
+            color,
+            default_command: None,
+            generator: None
+        }
+
+    }
+
     pub fn to_primitive_types(self) -> ProtoRequest {
 
         let command_type: String;

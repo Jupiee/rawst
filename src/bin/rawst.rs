@@ -31,6 +31,7 @@ async fn main() -> Result<(), RawstErr> {
 
             }, 
             _ => {
+                println!("{:?}", args);
 
                 let converted = args.to_primitive_types();
                 client::run_client(converted, address).await?;
