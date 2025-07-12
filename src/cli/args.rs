@@ -188,7 +188,11 @@ impl Arguments {
                     };
 
                     let input = match args.input {
-                        Some(url) => Some(InputSource::File(PathBuf::from(url))),
+                        Some(source_string) => {
+                            let source = parse_input_source(&source_string.as_str()).unwrap();
+                            Some(source)
+
+                        },
                         None => None
 
                     };
