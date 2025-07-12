@@ -239,17 +239,11 @@ impl Arguments {
 
         };
 
-        let auto = "Auto".to_owned();
-        let always = "Always".to_owned();
-
-        let color_choice = if proto.color == auto {
-            concolor_clap::ColorChoice::Auto
-            
-        } else if proto.color == always {
-            concolor_clap::ColorChoice::Always
-
-        } else {
-            concolor_clap::ColorChoice::Never
+        let color_choice = match proto.color.as_str() {
+            "Auto" => concolor_clap::ColorChoice::Auto,
+            "Always" => concolor_clap::ColorChoice::Always,
+            "Never" => concolor_clap::ColorChoice::Never,
+            _ => concolor_clap::ColorChoice::Auto
 
         };
 
@@ -257,32 +251,16 @@ impl Arguments {
             color: color_choice
         };
 
-        let off =  "Off".to_owned();
-        let debug = "Debug".to_owned();
-        let error = "Error".to_owned();
-        let info = "Info".to_owned();
-        let trace = "Trace".to_owned();
-
         let verbosity = match proto.verbosity {
             Some(level) => {
-
-                if level == off {
-                    Some(log::LevelFilter::Off)
-
-                } else if level == debug {
-                    Some(log::LevelFilter::Debug)
-
-                } else if level == error {
-                    Some(log::LevelFilter::Error)
-
-                } else if level == info {
-                    Some(log::LevelFilter::Info)
-
-                } else if level == trace {
-                    Some(log::LevelFilter::Trace)
-
-                } else {
-                    Some(log::LevelFilter::Warn)
+                match level.as_str() {
+                    "Off" => Some(log::LevelFilter::Off),
+                    "Debug" => Some(log::LevelFilter::Debug),
+                    "Error" => Some(log::LevelFilter::Error),
+                    "Info" => Some(log::LevelFilter::Info),
+                    "Trace" => Some(log::LevelFilter::Trace),
+                    "Warn" => Some(log::LevelFilter::Warn),
+                    _ => Some(log::LevelFilter::Off)
 
                 }
 
@@ -293,24 +271,14 @@ impl Arguments {
 
         let log_verbosity = match proto.log_verbosity {
             Some(level) => {
-
-                if level == off {
-                    Some(log::LevelFilter::Off)
-
-                } else if level == debug {
-                    Some(log::LevelFilter::Debug)
-
-                } else if level == error {
-                    Some(log::LevelFilter::Error)
-
-                } else if level == info {
-                    Some(log::LevelFilter::Info)
-
-                } else if level == trace {
-                    Some(log::LevelFilter::Trace)
-
-                } else {
-                    Some(log::LevelFilter::Warn)
+                match level.as_str() {
+                    "Off" => Some(log::LevelFilter::Off),
+                    "Debug" => Some(log::LevelFilter::Debug),
+                    "Error" => Some(log::LevelFilter::Error),
+                    "Info" => Some(log::LevelFilter::Info),
+                    "Trace" => Some(log::LevelFilter::Trace),
+                    "Warn" => Some(log::LevelFilter::Warn),
+                    _ => Some(log::LevelFilter::Off)
 
                 }
 
