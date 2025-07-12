@@ -15,7 +15,6 @@ pub mod rawstcli_proto {
     tonic::include_proto!("rawstproto");
 }
 
-use rawstcli_proto::rawst_download_client::RawstDownloadClient;
 use rawstcli_proto::{DownloadArgs as ProtoDownloadArgs, ResumeArgs as ProtoResumeArgs, HistoryArgs as ProtoHistoryArgs, Request as ProtoRequest, request::CommandArgs as ProtoCommandArgs};
 
 #[derive(Debug, PartialEq, Clone)]

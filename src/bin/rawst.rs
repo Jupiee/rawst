@@ -12,27 +12,16 @@ use rawst_dl::client::client;
 #[tokio::main]
 async fn main() -> Result<(), RawstErr> {
     let args = args::get();
-    let config = match Config::load().await {
-        Ok(config) => config,
-        Err(_) => {
-            let config = Config::default();
-            config.initialise_files().await?;
-            config
-        }
-    };
 
     let address = "http://127.0.0.1:50051".to_owned();
     
     if let Some(cmd) = &args.command {
         match cmd {
             Command::Server(server_options) => {
-
                 server::start_server(server_options).await?;
 
             }, 
             _ => {
-                println!("{:?}", args);
-
                 let converted = args.to_primitive_types();
                 client::run_client(converted, address).await?;
 

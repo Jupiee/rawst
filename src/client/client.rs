@@ -1,9 +1,5 @@
 use crate::core::errors::RawstErr;
 
-pub mod rawstcli_proto {
-    tonic::include_proto!("rawstproto");
-}
-
 use crate::cli::args::rawstcli_proto::rawst_download_client::RawstDownloadClient;
 use crate::cli::args::rawstcli_proto::Request as ProtoRequest;
 
