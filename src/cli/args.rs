@@ -15,7 +15,7 @@ pub mod rawstcli_proto {
     tonic::include_proto!("rawstproto");
 }
 
-use rawstcli_proto::{DownloadArgs as ProtoDownloadArgs, ResumeArgs as ProtoResumeArgs, HistoryArgs as ProtoHistoryArgs, Request as ProtoRequest, request::CommandArgs as ProtoCommandArgs};
+use rawstcli_proto::{DownloadArgs as ProtoDownloadArgs, ResumeArgs as ProtoResumeArgs, HistoryArgs as ProtoHistoryArgs, Config as ProtoConfigArgs, Request as ProtoRequest, request::CommandArgs as ProtoCommandArgs};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum InputSource {
@@ -230,6 +230,9 @@ impl Arguments {
                         }
                     ))
 
+                },
+                ProtoCommandArgs::ConfigArgs(_) => {
+                    Some(Command::Config)
                 }
                 
             }
@@ -355,6 +358,14 @@ impl Arguments {
                 )
 
             },
+            Some(Command::Config) => {
+                command_type = "Config".to_string();
+
+                ProtoCommandArgs::ConfigArgs(
+                    ProtoConfigArgs{}
+                )
+
+            }
             _ => {
                 command_type = "Download".to_string();
                 ProtoCommandArgs::DownloadArgs(

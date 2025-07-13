@@ -18,6 +18,9 @@ message HistoryArgs {
     bool clear = 2;
 }
 
+message Config {
+}
+
 message Request {
     string argument_type = 1;
 
@@ -25,11 +28,12 @@ message Request {
         DownloadArgs download_args = 2;
         ResumeArgs resume_args = 3;
         HistoryArgs history_args = 4;
+        Config config_args = 5;
     };
 
-    string color = 5;
-    optional string log_verbosity = 6;
-    optional string verbosity = 7;
+    string color = 6;
+    optional string log_verbosity = 7;
+    optional string verbosity = 8;
 }
 
 message Response {

@@ -5,6 +5,7 @@ use crate::core::errors::RawstErr;
 use crate::core::config::Config;
 use crate::core::engine::{download, resume_download};
 use crate::core::history;
+use crate::core::config::edit_config;
 
 use crate::cli::args::rawstcli_proto::rawst_download_server::{RawstDownload, RawstDownloadServer};
 use crate::cli::args::rawstcli_proto::{Request as ProtoRequest, Response as ProtoResponse};
@@ -36,6 +37,7 @@ impl RawstDownload for RawstService {
                     Command::Download(args) => download(args, config).await.map_err(|_| RawstErr::InitilisationError).unwrap(),
                     Command::Resume(args) => resume_download(args, config).await.map_err(|_| RawstErr::InitilisationError).unwrap(),
                     Command::History(args) => history::check_history_args(args, config).await.map_err(|_| RawstErr::InitilisationError).unwrap(),
+                    Command::Config => edit_config(config).await.unwrap(),
                     _ => ()
                 }
             }
