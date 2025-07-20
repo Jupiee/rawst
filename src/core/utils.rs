@@ -4,7 +4,7 @@ use std::fs;
 
 use iri_string::types::IriString;
 use serde_json::Value;
-use reqwest::header::HeaderMap;
+use reqwest::header::{HeaderMap, HeaderValue, HeaderName};
 
 use crate::core::errors::RawstErr;
 
@@ -67,6 +67,34 @@ pub fn extract_filename_from_header(headers: &HeaderMap) -> Option<PathBuf> {
         }
         None => None,
     }
+}
+
+pub fn headermap_to_hashmap(headers: &HeaderMap) -> HashMap<String, String> {
+
+    headers.iter().filter_map(|(name, value)|{
+      let key = name.to_string();
+      match value.to_str() {
+        Ok(value_string) => Some((key, value_string.to_string())),
+        Err(_) => None
+      }  
+    })
+    .collect::<HashMap<String, String>>()
+
+}
+
+pub fn hashmap_to_headermap(map: &HashMap<String, String>) -> HeaderMap {
+    let mut headers = HeaderMap::new();
+
+    for (key, value) in map {
+        if let (Ok(header_name), Ok(header_value)) = (
+            HeaderName::from_bytes(key.as_bytes()),
+            HeaderValue::from_str(value),
+        ) {
+            headers.insert(header_name, header_value);
+        }
+    }
+
+    headers
 }
 
 pub fn chunk_file_name(hashed_filename: String, part: usize) -> PathBuf {

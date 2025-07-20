@@ -9,10 +9,14 @@ use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use iri_string::types::IriString;
 use base64::{prelude::BASE64_STANDARD, Engine as Base64Engine};
 
+use tokio::sync::mpsc::Sender;
+use crate::cli::args::rawstcli_proto::ProgressData;
+use tonic::Status;
+
 use crate::core::config::Config;
 use crate::core::errors::RawstErr;
 use crate::core::http_handler::HttpHandler;
-use crate::core::task::HttpTask;
+use crate::core::task::{HttpTask, TaskType, ChunkType};
 use crate::core::utils::{extract_filename_from_header, extract_filename_from_url, headers_from_file};
 use crate::core::history::HistoryManager;
 use crate::cli::args::InputSource;
@@ -20,7 +24,7 @@ use crate::cli::args::DownloadArgs;
 use crate::cli::args::ResumeArgs;
 use crate::core::io::{get_cache_sizes, read_links};
 
-pub async fn download(args: DownloadArgs, mut config: Config) -> Result<(), RawstErr> {
+pub async fn download(args: DownloadArgs, mut config: Config) -> Result<TaskType, RawstErr> {
     // TODO: Fuse url_download and list_download
     // TODO: Support downloading many elements from each source
     log::trace!("Downloading files ({args:?}, {config:?})");
@@ -31,7 +35,7 @@ pub async fn download(args: DownloadArgs, mut config: Config) -> Result<(), Raws
 
     }
 
-    let engine= Engine::new(config);
+    let mut engine= Engine::new(config);
 
     let additional_headers: HashMap<String, String> = if args.headers_file_path.is_some() {
 
@@ -47,18 +51,23 @@ pub async fn download(args: DownloadArgs, mut config: Config) -> Result<(), Raws
 
         match input {
 
-            InputSource::File(file_path) => engine.process_list_download(file_path, additional_headers).await?,
+            InputSource::File(file_path) => {
+                let hm_http_task = engine.process_list_download(file_path, additional_headers).await?;
+                Ok(TaskType::Multiple(hm_http_task))
+            
+            },
             InputSource::Iris(list_of_iris) => {
                 let iri: IriString = list_of_iris.into_iter().next().ok_or(RawstErr::InvalidArgs)?;
                 let save_as = args.output_file_path.into_iter().next();
 
-                engine.process_url_download(iri, save_as, additional_headers).await?
+                //engine.process_url_download(iri, save_as, additional_headers).await?
+                let http_task = engine.create_http_task(iri, (&save_as).into(), &additional_headers).await?;
+
+                Ok(TaskType::Single(http_task))
 
             }
 
         }
-
-        Ok(())
 
     } else {
 
@@ -68,7 +77,7 @@ pub async fn download(args: DownloadArgs, mut config: Config) -> Result<(), Raws
 
 }
 
-pub async fn resume_download(args: ResumeArgs, config: Config) -> Result<(),RawstErr> {
+/*pub async fn resume_download(args: ResumeArgs, config: Config) -> Result<(),RawstErr> {
     let ids= args.download_ids;
     let mut engine= Engine::new(config);
 
@@ -86,7 +95,7 @@ pub async fn resume_download(args: ResumeArgs, config: Config) -> Result<(),Raws
 
     }
 
-}
+}*/
 
 pub struct Engine {
     config: Config,
@@ -108,7 +117,7 @@ impl Engine {
         }
     }
 
-    pub async fn process_url_download(mut self, iri: IriString, save_as: Option<PathBuf>, additional_headers: HashMap<String, String>) -> Result<(), RawstErr> {
+    /*pub async fn process_url_download(mut self, iri: IriString, save_as: Option<PathBuf>, additional_headers: HashMap<String, String>) -> Result<(), RawstErr> {
 
         let http_task = self.create_http_task(iri, (&save_as).into(), &additional_headers).await?;
 
@@ -121,9 +130,9 @@ impl Engine {
         self.history_manager.update_record(encoded_timestamp_as_id)?;
     
         Ok(())
-    }
+    }*/
 
-    pub async fn process_list_download(mut self, file_path: PathBuf, additional_headers: HashMap<String, String>) -> Result<(), RawstErr> {
+    pub async fn process_list_download(mut self, file_path: PathBuf, additional_headers: HashMap<String, String>) -> Result<HashMap<String, HttpTask>, RawstErr> {
         self.config.threads = 1;
         
         let link_string = read_links(&file_path).await?;
@@ -149,7 +158,9 @@ impl Engine {
     
         }
 
-        let val: Vec<HttpTask> = tasks.clone().into_values().collect();
+        Ok(tasks)
+
+        /*let val: Vec<HttpTask> = tasks.clone().into_values().collect();
     
         self.list_http_download(val).await?;
     
@@ -157,10 +168,10 @@ impl Engine {
             self.history_manager.update_record(id.to_owned())?;
         }
     
-        Ok(())
+        Ok(())*/
     }
 
-    pub async fn process_resume_request(&mut self, id: String) -> Result<(), RawstErr> {
+    /*pub async fn process_resume_request(&mut self, id: String) -> Result<(), RawstErr> {
         log::trace!("Resuming download (id:{:?}, config:{:?})", id, self.config);
         let record = if id == "auto" {
             self.history_manager.get_recent_pending()?
@@ -209,9 +220,9 @@ impl Engine {
         }
     
         Ok(())
-    }
+    }*/
 
-    pub async fn http_download(&self, task: HttpTask) -> Result<(), RawstErr> {
+    pub async fn http_download(mut self, task: HttpTask, tx: Sender<Result<ProgressData, Status>>) -> Result<(), RawstErr> {
         log::trace!("Starting HTTP download (task:{task:?})");
         let file_name_str = task.filename.display().to_string();
 
@@ -226,17 +237,21 @@ impl Engine {
         progressbar.set_position(task.total_downloaded.load(Ordering::SeqCst));
         progressbar.reset_eta();
 
-        match self.config.threads {
-            1 => {
+        match &task.chunk_data {
+            ChunkType::Single(_) => {
                 self.http_handler
-                    .sequential_download(&task, &progressbar, &self.config)
+                    .sequential_download(&task, &progressbar, &self.config, tx)
                     .await?
             }
-            _ => {
+            ChunkType::Multiple(vec_chunks) => {
+
+                self.config.threads = vec_chunks.len();
+
                 self.http_handler
-                    .concurrent_download(&task, &progressbar, &self.config)
+                    .concurrent_download(&task, &progressbar, &self.config, tx)
                     .await?
-            }
+            },
+            _ => ()
         }
 
         progressbar.finish();
@@ -244,7 +259,7 @@ impl Engine {
         Ok(())
     }
 
-    pub async fn list_http_download(&self, tasks: Vec<HttpTask>) -> Result<(), RawstErr> {
+    /*pub async fn list_http_download(&self, tasks: Vec<HttpTask>) -> Result<(), RawstErr> {
         let http_download_tasks = stream::iter((0..tasks.len()).map(|i| {
             let threaded_task = tasks[i].clone();
 
@@ -261,7 +276,7 @@ impl Engine {
             .await;
 
         Ok(())
-    }
+    }*/
 
     pub async fn create_http_task(
         &mut self,

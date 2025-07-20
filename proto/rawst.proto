@@ -2,44 +2,39 @@ syntax = "proto3";
 
 package rawstproto;
 
-message DownloadArgs {
-    optional uint32 threads = 1;
-    optional string input = 2;
-    repeated string output_file_path = 3;
-    optional string headers_file_path = 4;
+message Chunk {
+    uint64 x_offset = 1;
+    uint64 y_offset = 2;
+    uint64 downloaded = 3;
+
 }
 
-message ResumeArgs {
-    repeated string download_ids = 1;
+message VecOfChunks {
+    repeated Chunk multiple_chunks = 1;
+
 }
 
-message HistoryArgs {
-    bool show = 1;
-    bool clear = 2;
-}
+message HttpTask {
 
-message Config {
-}
+    string iri = 1;
+    string file_name = 2;
+    uint64 total_downloaded = 3;
+    oneof ChunkType {
+        Chunk chunk = 4;
+        VecOfChunks multiple_chunks = 5;
 
-message Request {
-    string argument_type = 1;
-
-    oneof command_args {
-        DownloadArgs download_args = 2;
-        ResumeArgs resume_args = 3;
-        HistoryArgs history_args = 4;
-        Config config_args = 5;
     };
+    map<string, string> additional_headers = 6;
+    string timestamp = 7;
+    map<string, string> headers = 8;
 
-    string color = 6;
-    optional string log_verbosity = 7;
-    optional string verbosity = 8;
 }
 
-message Response {
-    string output = 1;
+message ProgressData {
+    uint64 chunk_size = 1;
+
 }
 
 service RawstDownload {
-    rpc Send(Request) returns (Response);
+    rpc Download(HttpTask) returns (stream ProgressData) {}
 }

@@ -41,6 +41,11 @@ pub enum ChunkType {
     None,
 }
 
+pub enum TaskType {
+    Single(HttpTask),
+    Multiple(HashMap<String, HttpTask>)
+}
+
 #[derive(Clone)]
 pub struct HttpTask {
     pub iri: IriString,
@@ -52,7 +57,7 @@ pub struct HttpTask {
 
     // Cached headermap from Head request
     // Efficient for header values retrieval
-    headers: HeaderMap,
+    pub headers: HeaderMap,
 }
 
 impl std::fmt::Debug for HttpTask {

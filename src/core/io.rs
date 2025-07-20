@@ -8,6 +8,10 @@ use reqwest::Response;
 use tokio::fs::{remove_file, rename, File};
 use tokio::io::{AsyncReadExt, AsyncWriteExt, BufReader, BufWriter};
 
+use tokio::sync::mpsc::Sender;
+use crate::cli::args::rawstcli_proto::ProgressData;
+use tonic::Status;
+
 use crate::core::config::Config;
 use crate::core::errors::RawstErr;
 use crate::core::task::{ChunkType, HttpTask};
@@ -69,6 +73,7 @@ pub async fn create_file(
     response: Response,
     pb: &ProgressBar,
     base_path: &Path,
+    tx: Sender<Result<ProgressData, Status>>
 ) -> Result<(), RawstErr> {
     let hashed_file_name = chunk_file_name(task.hashed_file_name(), 1);
     let file_path = base_path.join(hashed_file_name);
@@ -93,6 +98,9 @@ pub async fn create_file(
         task.total_downloaded
             .fetch_add(chunk_size, Ordering::SeqCst);
         pb.set_position(task.total_downloaded.load(Ordering::SeqCst));
+        tx.send(Ok(ProgressData {
+            chunk_size: chunk_size
+        })).await.unwrap();
     }
 
     let renamed_file_path = base_path.join(&task.filename);
@@ -107,6 +115,7 @@ pub async fn create_cache(
     response: Response,
     pb: &ProgressBar,
     base_path: &Path,
+    tx: Sender<Result<ProgressData, Status>>
 ) -> Result<(), RawstErr> {
     if let ChunkType::Multiple(chunks) = &task.chunk_data {
 
@@ -138,6 +147,9 @@ pub async fn create_cache(
             task.total_downloaded
                 .fetch_add(chunk_size, Ordering::SeqCst);
             pb.set_position(task.total_downloaded.load(Ordering::SeqCst));
+            tx.send(Ok(ProgressData {
+                chunk_size: chunk_size
+            })).await.unwrap();
 
             // Updates downloaded bytes for each chunk
             chunks[chunk_number]

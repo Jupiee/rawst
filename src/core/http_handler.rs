@@ -8,6 +8,10 @@ use reqwest::{
     Client, StatusCode, ClientBuilder,
 };
 
+use tokio::sync::mpsc::Sender;
+use crate::cli::args::rawstcli_proto::ProgressData;
+use tonic::Status;
+
 use crate::core::config::Config;
 use crate::core::errors::RawstErr;
 use crate::core::io::{create_cache, create_file, merge_files};
@@ -32,6 +36,7 @@ impl HttpHandler {
         task: &HttpTask,
         progressbar: &ProgressBar,
         config: &Config,
+        tx: Sender<Result<ProgressData, Status>>
     ) -> Result<(), RawstErr> {
         log::trace!("Starting sequential download (task:{task:?}, config:{config:?})");
         let mut headers: HeaderMap = (&task.additional_headers).try_into().expect("invalid headers");
@@ -51,7 +56,7 @@ impl HttpHandler {
             .map_err(RawstErr::HttpError)?;
 
         if response.status().is_success() {
-            create_file(task, response, progressbar, &config.download_dir).await?;
+            create_file(task, response, progressbar, &config.download_dir, tx).await?;
         }
 
         Ok(())
@@ -62,10 +67,12 @@ impl HttpHandler {
         task: &HttpTask,
         progressbar: &ProgressBar,
         config: &Config,
+        tx: Sender<Result<ProgressData, Status>>
     ) -> Result<(), RawstErr> {
         log::trace!("Starting concurrent download (task:{task:?}, config:{config:?})");
         // Creates a stream iter for downloading each chunk separately
         let download_tasks = stream::iter((0..config.threads).map(|i| {
+            let tx = tx.clone();
             let client = &self.client;
             let mut headers: HeaderMap = (&task.additional_headers).try_into().expect("invalid headers");
 
@@ -91,7 +98,7 @@ impl HttpHandler {
                         .map_err(RawstErr::HttpError)?;
 
                     if response.status().is_success() {
-                        create_cache(i, task, response, progressbar, &config.cache_dir).await?;
+                        create_cache(i, task, response, progressbar, &config.cache_dir, tx).await?;
                     }
                 }
 
