@@ -28,11 +28,6 @@ pub async fn check_history_args(args: HistoryArgs, config: Config) -> Result<(),
 
 }
 
-#[derive(Deserialize, Serialize)]
-struct Downloads {
-    record: Vec<Record>,
-}
-
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Record {
     pub id: String,
