@@ -9,6 +9,7 @@ use iri_string::types::IriString;
 use reqwest::header::HeaderMap;
 use chrono::prelude::{Local, DateTime};
 use sha2::{Sha256, Digest};
+use hex::encode;
 
 #[derive(Clone, Debug)]
 pub struct Chunk {
@@ -95,7 +96,7 @@ impl HttpTask {
 
         hasher.update(formatted_string.as_bytes());
 
-        format!("{:x}", hasher.finalize())
+        encode(hasher.finalize())
 
     }
 

@@ -157,11 +157,11 @@ pub struct Arguments {
     generator: Option<Shell>,
 }
 
-fn generate_completion_script<G: Generator>(gen: G, cmd: &mut clap::Command) {
+fn generate_completion_script<G: Generator>(r#gen: G, cmd: &mut clap::Command) {
     let cmd_name = cmd.get_name().to_string();
     let base_dirs = BaseDirs::new().unwrap();
     let config_dir = base_dirs.config_dir().join("rawst").to_path_buf();
-    clap_complete::generate_to(gen, cmd, cmd_name, &config_dir).unwrap();
+    clap_complete::generate_to(r#gen, cmd, cmd_name, &config_dir).unwrap();
     println!("Generated completion script at {}", config_dir.display())
 }
 

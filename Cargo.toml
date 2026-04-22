@@ -6,7 +6,7 @@ description = "Snag your files efficiently with Rawst downloader"
 repository = "https://github.com/Jupiee/rawst"
 license = "GPL-3.0"
 readme = "README.md"
-edition = "2021"
+edition = "2024"
 default-run = "rawst"
 include = ["src/**/*"]
 categories = ["command-line-utilities", "network-programming", "asynchronous"]
@@ -14,23 +14,24 @@ keywords = ["cli", "async", "http", "network", "download-manager"]
 
 [dependencies]
 base64 = "0.22.1"
-chrono = "0.4.40"
-clap = { version = "4.5.36", features = ["cargo", "derive"] }
+chrono = "0.4.44"
+clap = { version = "4.6.1", features = ["cargo", "derive"] }
 clap-num = "1.2.0"
-clap_complete = "4.5.47"
+clap_complete = "4.6.2"
 concolor-clap = "0.1.0"
 directories = "6.0.0"
 fern = { version = "0.7.1", features = ["chrono", "colored"] }
-futures = "0.3.31"
-humantime = "2.2.0"
-indicatif = "0.17.11"
-iri-string = { version = "0.7.8", features = ["serde"] }
-log = "0.4.27"
-reqwest = {version= "0.12.15", default-features = false, features = ["stream", "rustls-tls", "cookies"]}
+futures = "0.3.32"
+hex = "0.4.3"
+humantime = "2.3.0"
+indicatif = "0.18.4"
+iri-string = { version = "0.7.12", features = ["serde"] }
+log = "0.4.29"
+reqwest = {version= "0.13.2", default-features = false, features = ["stream", "rustls", "cookies"]}
 serde = {version= "1.0.219", features = ["derive"]}
-serde_json = "1.0.140"
-sha2 = "0.10.8"
-tokio = {version= "1.44.2", features = ["full"]}
+serde_json = "1.0.149"
+sha2 = "0.11.0"
+tokio = {version= "1.52.1", features = ["full"]}
 toml = "0.8.20"
 
 [profile.dev]
