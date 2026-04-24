@@ -59,7 +59,6 @@
                   # https://devenv.sh/reference/options/#languagesrustenable
                   enable = true;
                   channel = "nightly";
-                  version = "latest";
                   mold = {
                     enable = true;
                   };
