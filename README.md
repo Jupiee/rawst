@@ -52,9 +52,11 @@ Snag your files efficiently with Rawst downloader, written in rust for blazingly
 - **Requirements**
   - rust nightly is required
 - run ``cargo build --release``
-- move the binary to corresponding directories
-  - Windows => ``C:\Users\%USERNAME%\AppData\Local\Microsoft\WindowsApps``
-  - Linux => ``/usr/local/bin``
+- Windows: 
+  - Move the binary to ``C:\Users\%USERNAME%\rawst``
+  - Add ``C:\Users\%USERNAME%\rawst`` to PATH.
+- Linux: 
+  - Move the binary to ``/usr/local/bin``
 
 </details>
 
