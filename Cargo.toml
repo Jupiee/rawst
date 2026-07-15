@@ -14,24 +14,24 @@ keywords = ["cli", "async", "http", "network", "download-manager"]
 
 [dependencies]
 base64 = "0.22.1"
-chrono = "0.4.44"
-clap = { version = "4.6.1", features = ["cargo", "derive"] }
+chrono = "0.4.45"
+clap = { version = "4.6.2", features = ["cargo", "derive"] }
 clap-num = "1.2.0"
-clap_complete = "4.6.2"
+clap_complete = "4.6.7"
 concolor-clap = "0.1.0"
 directories = "6.0.0"
 fern = { version = "0.7.1", features = ["chrono", "colored"] }
 futures = "0.3.32"
 hex = "0.4.3"
-humantime = "2.3.0"
-indicatif = "0.18.4"
-iri-string = { version = "0.7.12", features = ["serde"] }
-log = "0.4.29"
-reqwest = {version= "0.13.2", default-features = false, features = ["stream", "rustls", "cookies"]}
+humantime = "2.4.0"
+indicatif = "0.18.6"
+iri-string = { version = "0.7.13", features = ["serde"] }
+log = "0.4.33"
+reqwest = {version= "0.13.4", default-features = false, features = ["stream", "rustls", "cookies"]}
 serde = {version= "1.0.219", features = ["derive"]}
-serde_json = "1.0.149"
+serde_json = "1.0.150"
 sha2 = "0.11.0"
-tokio = {version= "1.52.1", features = ["full"]}
+tokio = {version= "1.52.3", features = ["full"]}
 toml = "0.9.8"
 
 [profile.dev]
