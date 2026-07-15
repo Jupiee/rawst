@@ -109,8 +109,7 @@ pub struct Config {
 impl Config {
     pub fn log_file_path(&self) -> PathBuf {
         let td = format_timedate(chrono::Local::now());
-        let thread_id = std::thread::current().id().as_u64();
-        let run_id = format!("{}-{}", td, thread_id);
+        let run_id = format!("{}", td);
 
         // ~/.cache/rawst/logs/2024-12-31_23:59:59_-07:00-1.log
         self.log_dir.join(format!("{}.log", run_id))
